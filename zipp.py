@@ -2,8 +2,18 @@
 
 """
 >>> root = Path(getfixture('zipfile_abcde'))
->>> list(root.listdir())
-[Path('abcde.zip', 'a.txt'), Path('abcde.zip', 'b/')]
+>>> a, b = root.iterdir()
+>>> a
+Path('abcde.zip', 'a.txt')
+>>> b
+Path('abcde.zip', 'b/')
+>>> c = b / 'c.txt'
+>>> c
+Path('abcde.zip', 'b/c.txt')
+>>> c.name
+'c.txt'
+>>> c.read_text()
+'content of c'
 """
 
 import io
@@ -23,6 +33,10 @@ class Path:
     def open(self):
         return functools.partial(self.root.open, self.at)
 
+    @property
+    def name(self):
+        return posixpath.basename(self.at)
+
     def read_text(self, *args, **kwargs):
         with self.open() as strm:
             return io.TextIOWrapper(strm, *args, **kwargs).read()
@@ -37,14 +51,14 @@ class Path:
     def _next(self, at):
         return Path(self.root, at)
 
-    def isdir(self):
+    def is_dir(self):
         return not self.at or self.at.endswith('/')
 
-    def isfile(self):
-        return not self.isdir()
+    def is_file(self):
+        return not self.is_dir()
 
-    def listdir(self):
-        if not self.isdir():
+    def iterdir(self):
+        if not self.is_dir():
             raise ValueError("Can't listdir a file")
         names = map(operator.attrgetter('filename'), self.root.infolist())
         subs = map(self._next, names)
