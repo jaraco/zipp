@@ -18,3 +18,10 @@ def test_open(zipfile_abcde):
     with a.open() as strm:
         data = strm.read()
     assert data == b'content of a'
+
+
+def test_read(zipfile_abcde):
+    root = zippath.ZipPath(zipfile_abcde)
+    a, b = root.listdir()
+    assert a.read_text() == 'content of a'
+    assert a.read_bytes() == b'content of a'

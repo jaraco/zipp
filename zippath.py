@@ -4,6 +4,7 @@
 [ZipPath('abcde.zip', 'a.txt'), ZipPath('abcde.zip', 'b/')]
 """
 
+import io
 import posixpath
 import zipfile
 import operator
@@ -19,6 +20,14 @@ class ZipPath:
     @property
     def open(self):
         return functools.partial(self.root.open, self.at)
+
+    def read_text(self, *args, **kwargs):
+        with self.open() as strm:
+            return io.TextIOWrapper(strm, *args, **kwargs).read()
+
+    def read_bytes(self):
+        with self.open() as strm:
+            return strm.read()
 
     def _is_child(self, path):
         return posixpath.dirname(path.at.rstrip('/')) == self.at.rstrip('/')
