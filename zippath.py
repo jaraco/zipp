@@ -1,3 +1,5 @@
+# coding: future-fstrings
+
 """
 >>> root = ZipPath(getfixture('zipfile_abcde'))
 >>> list(root.listdir())
