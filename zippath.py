@@ -54,3 +54,11 @@ class ZipPath:
     def __repr__(self):
         return (
             f'{self.__class__.__name__}({self.root.filename!r}, {self.at!r})')
+
+    def __truediv__(self, add):
+        next = posixpath.join(self.at, add)
+        next_dir = posixpath.join(self.at, add, '')
+        names = self.root.namelist()
+        return self._next(
+            next_dir if next not in names and next_dir in names else next
+        )
