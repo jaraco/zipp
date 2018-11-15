@@ -1,12 +1,13 @@
 """
->>> root = ZipPath('./abcde.zip')
+>>> root = ZipPath(getfixture('zipfile_abcde'))
 >>> list(root.listdir())
-[ZipPath('./abcde.zip', 'a.txt'), ZipPath('./abcde.zip', 'b/')]
+[ZipPath('abcde.zip', 'a.txt'), ZipPath('abcde.zip', 'b/')]
 """
 
 import posixpath
 import zipfile
 import operator
+import functools
 
 
 class ZipPath:
@@ -14,6 +15,10 @@ class ZipPath:
         self.root = root if isinstance(root, zipfile.ZipFile) \
             else zipfile.ZipFile(root)
         self.at = at
+
+    @property
+    def open(self):
+        return functools.partial(self.root.open, self.at)
 
     def _is_child(self, path):
         return posixpath.dirname(path.at.rstrip('/')) == self.at.rstrip('/')
