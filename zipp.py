@@ -14,6 +14,10 @@ Path('abcde.zip', 'b/c.txt')
 'c.txt'
 >>> c.read_text()
 'content of c'
+>>> c.exists()
+True
+>>> (b / 'missing.txt').exists()
+False
 """
 
 import io
@@ -56,6 +60,9 @@ class Path:
 
     def is_file(self):
         return not self.is_dir()
+
+    def exists(self):
+        return self.at in self.root.namelist()
 
     def iterdir(self):
         if not self.is_dir():
