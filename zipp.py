@@ -1,9 +1,9 @@
 # coding: future-fstrings
 
 """
->>> root = ZipPath(getfixture('zipfile_abcde'))
+>>> root = Path(getfixture('zipfile_abcde'))
 >>> list(root.listdir())
-[ZipPath('abcde.zip', 'a.txt'), ZipPath('abcde.zip', 'b/')]
+[Path('abcde.zip', 'a.txt'), Path('abcde.zip', 'b/')]
 """
 
 import io
@@ -13,7 +13,7 @@ import operator
 import functools
 
 
-class ZipPath:
+class Path:
     def __init__(self, root, at=''):
         self.root = root if isinstance(root, zipfile.ZipFile) \
             else zipfile.ZipFile(root)
@@ -35,7 +35,7 @@ class ZipPath:
         return posixpath.dirname(path.at.rstrip('/')) == self.at.rstrip('/')
 
     def _next(self, at):
-        return ZipPath(self.root, at)
+        return Path(self.root, at)
 
     def isdir(self):
         return not self.at or self.at.endswith('/')
