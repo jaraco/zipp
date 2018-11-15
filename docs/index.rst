@@ -1,4 +1,4 @@
-Welcome to skeleton documentation!
+Welcome to zipp documentation!
 ========================================
 
 .. toctree::
@@ -7,7 +7,7 @@ Welcome to skeleton documentation!
    history
 
 
-.. automodule:: skeleton
+.. automodule:: zipp
     :members:
     :undoc-members:
     :show-inheritance:
