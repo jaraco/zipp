@@ -55,7 +55,9 @@ class Path:
 
     def __repr__(self):
         return (
-            f'{self.__class__.__name__}({self.root.filename!r}, {self.at!r})')
+            f'{self.__class__.__name__}'
+            f'({self.root.filename!r}, {self.at!r})'
+        )
 
     def __truediv__(self, add):
         next = posixpath.join(self.at, add)
