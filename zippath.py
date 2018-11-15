@@ -11,7 +11,8 @@ import operator
 
 class ZipPath:
     def __init__(self, root, at=''):
-        self.root = root
+        self.root = root if isinstance(root, zipfile.ZipFile) \
+            else zipfile.ZipFile(root)
         self.at = at
 
     def _is_child(self, path):
@@ -29,8 +30,7 @@ class ZipPath:
     def listdir(self):
         if not self.isdir():
             raise ValueError("Can't listdir a file")
-        zf = zipfile.ZipFile(self.root)
-        names = map(operator.attrgetter('filename'), zf.infolist())
+        names = map(operator.attrgetter('filename'), self.root.infolist())
         subs = map(self._next, names)
         return filter(self._is_child, subs)
 
@@ -38,4 +38,5 @@ class ZipPath:
         return posixpath.join(self.root, self.at)
 
     def __repr__(self):
-        return f'{self.__class__.__name__}({self.root!r}, {self.at!r})'
+        return (
+            f'{self.__class__.__name__}({self.root.filename!r}, {self.at!r})')
