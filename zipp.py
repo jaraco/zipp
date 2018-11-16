@@ -16,6 +16,8 @@ Path('abcde.zip', 'b/c.txt')
 True
 >>> (b / 'missing.txt').exists()
 False
+>>> str(c)
+'abcde.zip/b/c.txt'
 """
 
 from __future__ import division
@@ -74,7 +76,7 @@ class Path:
         return filter(self._is_child, subs)
 
     def __str__(self):
-        return posixpath.join(self.root, self.at)
+        return posixpath.join(self.root.filename, self.at)
 
     def __repr__(self):
         return self.__repr.format(self=self)
