@@ -1,5 +1,3 @@
-# coding: future-fstrings
-
 """
 >>> root = Path(getfixture('zipfile_abcde'))
 >>> a, b = root.iterdir()
@@ -30,6 +28,8 @@ import functools
 
 
 class Path:
+    __repr = '{self.__class__.__name__}({self.root.filename!r}, {self.at!r})'
+
     def __init__(self, root, at=''):
         self.root = root if isinstance(root, zipfile.ZipFile) \
             else zipfile.ZipFile(root)
@@ -77,8 +77,7 @@ class Path:
         return posixpath.join(self.root, self.at)
 
     def __repr__(self):
-        return (
-            f'{self.__class__.__name__}({self.root.filename!r}, {self.at!r})')  # noqa E501
+        return self.__repr.format(self=self)
 
     def __truediv__(self, add):
         next = posixpath.join(self.at, add)
