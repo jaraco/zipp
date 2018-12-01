@@ -95,6 +95,7 @@ class Path:
         return self.__repr.format(self=self)
 
     def __truediv__(self, add):
+        add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
         next_dir = posixpath.join(self.at, add, '')
         names = self.root.namelist()
