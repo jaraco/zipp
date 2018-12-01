@@ -1,11 +1,10 @@
-from __future__ import division
+from __future__ import division, unicode_literals
 
 
 try:
     import pathlib
 except ImportError:
     import pathlib2 as pathlib
-
 
 import zipp
 
@@ -43,6 +42,19 @@ def test_traverse_truediv(zipfile_abcde):
     assert a.is_file()
     e = root / 'b' / 'd' / 'e.txt'
     assert e.read_text() == 'content of e'
+
+
+def test_traverse_simplediv(zipfile_abcde):
+    """
+    Disable the __future__.division when testing traversal.
+    """
+    code = compile(
+        source="zipp.Path(zipfile_abcde) / 'a'",
+        filename='(test)',
+        mode='eval',
+        dont_inherit=True,
+    )
+    eval(code)
 
 
 def test_pathlike_construction(zipfile_ondisk):
