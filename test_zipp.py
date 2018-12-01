@@ -49,4 +49,5 @@ def test_pathlike_construction(zipfile_ondisk):
     """
     zipp.Path should be constructable from a path-like object
     """
-    zipp.Path(pathlib.Path(zipfile_ondisk))
+    pathlike = pathlib.Path(str(zipfile_ondisk))
+    zipp.Path(pathlike)

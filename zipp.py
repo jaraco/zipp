@@ -48,7 +48,7 @@ class Path:
         try:
             return path.__fspath__()
         except AttributeError:
-            return path
+            return str(path)
 
     @property
     def open(self):
