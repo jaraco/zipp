@@ -1,3 +1,8 @@
+v0.3.1
+======
+
+#1: Fix TypeError on Python 3.5 when joining to a path-like object.
+
 v0.3.0
 ======
 
