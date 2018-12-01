@@ -1,3 +1,8 @@
+v0.3.2
+======
+
+#2: Fix TypeError on Python 2.7 when classic division is used.
+
 v0.3.1
 ======
 
