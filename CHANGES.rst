@@ -1,3 +1,11 @@
+v0.3.0
+======
+
+Add support for constructing a ``zipp.Path`` from any path-like
+object.
+
+``zipp.Path`` is now a new-style class on Python 2.7.
+
 v0.2.1
 ======
 
