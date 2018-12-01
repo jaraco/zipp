@@ -51,3 +51,8 @@ def test_pathlike_construction(zipfile_ondisk):
     """
     pathlike = pathlib.Path(str(zipfile_ondisk))
     zipp.Path(pathlike)
+
+
+def test_traverse_pathlike(zipfile_abcde):
+    root = zipp.Path(zipfile_abcde)
+    root / pathlib.Path('a')
