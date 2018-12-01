@@ -28,6 +28,8 @@ import zipfile
 import operator
 import functools
 
+__metaclass__ = type
+
 
 class Path:
     __repr = '{self.__class__.__name__}({self.root.filename!r}, {self.at!r})'
