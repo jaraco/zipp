@@ -36,8 +36,19 @@ class Path:
 
     def __init__(self, root, at=''):
         self.root = root if isinstance(root, zipfile.ZipFile) \
-            else zipfile.ZipFile(root)
+            else zipfile.ZipFile(self._pathlib_compat(root))
         self.at = at
+
+    @staticmethod
+    def _pathlib_compat(path):
+        """
+        For path-like objects, convert to a filename for compatibility
+        on Python 3.6.1 and earlier.
+        """
+        try:
+            return path.__fspath__()
+        except AttributeError:
+            return path
 
     @property
     def open(self):
