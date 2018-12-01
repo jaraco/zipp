@@ -23,6 +23,7 @@ False
 from __future__ import division
 
 import io
+import sys
 import posixpath
 import zipfile
 import operator
@@ -102,3 +103,6 @@ class Path:
         return self._next(
             next_dir if next not in names and next_dir in names else next
         )
+
+    if sys.version_info < (3,):
+        __div__ = __truediv__
