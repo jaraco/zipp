@@ -1,6 +1,12 @@
 from __future__ import division
 
 
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
+
 import zipp
 
 
@@ -37,3 +43,10 @@ def test_traverse_truediv(zipfile_abcde):
     assert a.is_file()
     e = root / 'b' / 'd' / 'e.txt'
     assert e.read_text() == 'content of e'
+
+
+def test_pathlike_construction(zipfile_ondisk):
+    """
+    zipp.Path should be constructable from a path-like object
+    """
+    zipp.Path(pathlib.Path(zipfile_ondisk))

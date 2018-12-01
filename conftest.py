@@ -28,3 +28,13 @@ def zipfile_abcde():
     zf.writestr('b/d/e.txt', 'content of e')
     zf.filename = 'abcde.zip'
     return zf
+
+
+@pytest.fixture
+def zipfile_ondisk(zipfile_abcde, tmpdir):
+    buffer = zipfile_abcde.fp
+    zipfile_abcde.close()
+    path = tmpdir / zipfile_abcde.filename
+    with path.open('wb') as strm:
+        strm.write(buffer.getvalue())
+    return path
