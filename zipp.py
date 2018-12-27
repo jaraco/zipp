@@ -5,6 +5,8 @@
 Path('abcde.zip', 'a.txt')
 >>> b
 Path('abcde.zip', 'b/')
+>>> b.name
+'b'
 >>> c = b / 'c.txt'
 >>> c
 Path('abcde.zip', 'b/c.txt')
