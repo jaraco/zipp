@@ -59,7 +59,7 @@ class Path:
 
     @property
     def name(self):
-        return posixpath.basename(self.at)
+        return posixpath.basename(self.at.rstrip('/'))
 
     def read_text(self, *args, **kwargs):
         with self.open() as strm:
