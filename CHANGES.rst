@@ -1,3 +1,8 @@
+v0.3.3
+======
+
+#3: Fix issue where ``.name`` on a directory was empty.
+
 v0.3.2
 ======
 
