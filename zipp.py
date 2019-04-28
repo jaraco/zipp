@@ -1,5 +1,5 @@
 """
->>> root = Path(getfixture('zipfile_abcde'))
+>>> root = Path(getfixture('zipfile_abcde_full'))
 >>> a, b = root.iterdir()
 >>> a
 Path('abcde.zip', 'a.txt')
