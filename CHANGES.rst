@@ -1,3 +1,8 @@
+v0.4.0
+======
+
+#4: Add support for zip files with implied directories.
+
 v0.3.3
 ======
 

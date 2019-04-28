@@ -1,5 +1,5 @@
 """
->>> root = Path(getfixture('zipfile_abcde'))
+>>> root = Path(getfixture('zipfile_abcde_full'))
 >>> a, b = root.iterdir()
 >>> a
 Path('abcde.zip', 'a.txt')
@@ -28,7 +28,6 @@ import io
 import sys
 import posixpath
 import zipfile
-import operator
 import functools
 
 __metaclass__ = type
@@ -82,13 +81,12 @@ class Path:
         return not self.is_dir()
 
     def exists(self):
-        return self.at in self.root.namelist()
+        return self.at in self._names()
 
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        names = map(operator.attrgetter('filename'), self.root.infolist())
-        subs = map(self._next, names)
+        subs = map(self._next, self._names())
         return filter(self._is_child, subs)
 
     def __str__(self):
@@ -101,10 +99,22 @@ class Path:
         add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
         next_dir = posixpath.join(self.at, add, '')
-        names = self.root.namelist()
+        names = self._names()
         return self._next(
             next_dir if next not in names and next_dir in names else next
         )
+
+    @staticmethod
+    def _add_implied_dirs(names):
+        return names + [
+            name + '/'
+            for name in map(posixpath.dirname, names)
+            if name
+            and name + '/' not in names
+        ]
+
+    def _names(self):
+        return self._add_implied_dirs(self.root.namelist())
 
     if sys.version_info < (3,):
         __div__ = __truediv__

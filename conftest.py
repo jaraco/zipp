@@ -2,13 +2,41 @@
 
 import io
 import zipfile
-
+import posixpath
 
 import pytest
+from more_itertools import consume
+
+
+def add_dirs(zipfile):
+    """
+    Given a writable zipfile, inject directory entries for
+    any directories implied by the presence of children.
+    """
+    names = zipfile.namelist()
+    consume(
+        zipfile.writestr(name + '/', '')
+        for name in map(posixpath.dirname, names)
+        if name
+        and name + '/' not in names
+    )
+    return zipfile
+
+
+@pytest.fixture(params=[add_dirs, lambda x: x])
+def zipfile_abcde(request):
+    """
+    Build the abcde zipfile with and without dir entries.
+    """
+    return request.param(build_abcde_files())
 
 
 @pytest.fixture
-def zipfile_abcde():
+def zipfile_abcde_full():
+    return add_dirs(build_abcde_files())
+
+
+def build_abcde_files():
     """
     Create a zip file with this structure:
 
@@ -22,9 +50,7 @@ def zipfile_abcde():
     data = io.BytesIO()
     zf = zipfile.ZipFile(data, 'w')
     zf.writestr('a.txt', 'content of a')
-    zf.writestr('b/', '')
     zf.writestr('b/c.txt', 'content of c')
-    zf.writestr('b/d/', '')
     zf.writestr('b/d/e.txt', 'content of e')
     zf.filename = 'abcde.zip'
     return zf
