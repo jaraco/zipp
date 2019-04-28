@@ -28,7 +28,6 @@ import io
 import sys
 import posixpath
 import zipfile
-import operator
 import functools
 
 __metaclass__ = type
@@ -87,8 +86,7 @@ class Path:
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        names = map(operator.attrgetter('filename'), self.root.infolist())
-        subs = map(self._next, names)
+        subs = map(self._next, self._names())
         return filter(self._is_child, subs)
 
     def __str__(self):
@@ -106,8 +104,17 @@ class Path:
             next_dir if next not in names and next_dir in names else next
         )
 
+    @staticmethod
+    def _add_implied_dirs(names):
+        return names + [
+            name + '/'
+            for name in map(posixpath.dirname, names)
+            if name
+            and name + '/' not in names
+        ]
+
     def _names(self):
-        return self.root.namelist()
+        return self._add_implied_dirs(self.root.namelist())
 
     if sys.version_info < (3,):
         __div__ = __truediv__
