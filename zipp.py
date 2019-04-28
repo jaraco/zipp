@@ -82,7 +82,7 @@ class Path:
         return not self.is_dir()
 
     def exists(self):
-        return self.at in self.root.namelist()
+        return self.at in self._names()
 
     def iterdir(self):
         if not self.is_dir():
@@ -101,10 +101,13 @@ class Path:
         add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
         next_dir = posixpath.join(self.at, add, '')
-        names = self.root.namelist()
+        names = self._names()
         return self._next(
             next_dir if next not in names and next_dir in names else next
         )
+
+    def _names(self):
+        return self.root.namelist()
 
     if sys.version_info < (3,):
         __div__ = __truediv__
