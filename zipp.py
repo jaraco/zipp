@@ -1,27 +1,3 @@
-"""
->>> root = Path(getfixture('zipfile_abcde_full'))
->>> a, b = root.iterdir()
->>> a
-Path('abcde.zip', 'a.txt')
->>> b
-Path('abcde.zip', 'b/')
->>> b.name
-'b'
->>> c = b / 'c.txt'
->>> c
-Path('abcde.zip', 'b/c.txt')
->>> c.name
-'c.txt'
->>> c.read_text()
-'content of c'
->>> c.exists()
-True
->>> (b / 'missing.txt').exists()
-False
->>> str(c)
-'abcde.zip/b/c.txt'
-"""
-
 from __future__ import division
 
 import io
@@ -34,6 +10,31 @@ __metaclass__ = type
 
 
 class Path:
+    """
+    A pathlib-compatible interface for zip files.
+
+    >>> root = Path(getfixture('zipfile_abcde_full'))
+    >>> a, b = root.iterdir()
+    >>> a
+    Path('abcde.zip', 'a.txt')
+    >>> b
+    Path('abcde.zip', 'b/')
+    >>> b.name
+    'b'
+    >>> c = b / 'c.txt'
+    >>> c
+    Path('abcde.zip', 'b/c.txt')
+    >>> c.name
+    'c.txt'
+    >>> c.read_text()
+    'content of c'
+    >>> c.exists()
+    True
+    >>> (b / 'missing.txt').exists()
+    False
+    >>> str(c)
+    'abcde.zip/b/c.txt'
+    """
     __repr = '{self.__class__.__name__}({self.root.filename!r}, {self.at!r})'
 
     def __init__(self, root, at=''):
