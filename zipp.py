@@ -13,25 +13,63 @@ class Path:
     """
     A pathlib-compatible interface for zip files.
 
-    >>> root = Path(getfixture('zipfile_abcde_full'))
+    Consider a zip file with this structure::
+
+        .
+        ├── a.txt
+        └── b
+            ├── c.txt
+            └── d
+                └── e.txt
+
+    >>> data = io.BytesIO()
+    >>> zf = zipfile.ZipFile(data, 'w')
+    >>> zf.writestr('a.txt', 'content of a')
+    >>> zf.writestr('b/c.txt', 'content of c')
+    >>> zf.writestr('b/d/e.txt', 'content of e')
+    >>> zf.filename = 'abcde.zip'
+
+    Path accepts the zipfile object itself or a filename
+
+    >>> root = Path(zf)
+
+    From there, several path operations are available.
+
+    Directory iteration (including the zip file itself):
+
     >>> a, b = root.iterdir()
     >>> a
     Path('abcde.zip', 'a.txt')
     >>> b
     Path('abcde.zip', 'b/')
+
+    name property:
+
     >>> b.name
     'b'
+
+    join with divide operator:
+
     >>> c = b / 'c.txt'
     >>> c
     Path('abcde.zip', 'b/c.txt')
     >>> c.name
     'c.txt'
+
+    Read text:
+
     >>> c.read_text()
     'content of c'
+
+    existence:
+
     >>> c.exists()
     True
     >>> (b / 'missing.txt').exists()
     False
+
+    Coersion to string:
+
     >>> str(c)
     'abcde.zip/b/c.txt'
     """
