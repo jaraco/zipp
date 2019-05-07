@@ -1,34 +1,16 @@
 # coding: utf-8
 
-from __future__ import division, unicode_literals
-
 import io
 import zipfile
 import posixpath
 import contextlib
 import tempfile
 import shutil
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
-
-try:
-    from contextlib import ExitStack
-except ImportError:
-    from contextlib2 import ExitStack
-
-try:
-    import unittest
-
-    unittest.TestCase.subTest
-except AttributeError:
-    import unittest2 as unittest
+import pathlib
+import unittest
 
 import zipp
 
-__metaclass__ = type
 consume = tuple
 
 
@@ -77,7 +59,7 @@ def tempdir():
 
 class TestEverything(unittest.TestCase):
     def setUp(self):
-        self.fixtures = ExitStack()
+        self.fixtures = contextlib.ExitStack()
         self.addCleanup(self.fixtures.close)
 
     def zipfile_abcde(self):
@@ -130,19 +112,6 @@ class TestEverything(unittest.TestCase):
             assert a.is_file()
             e = root / "b" / "d" / "e.txt"
             assert e.read_text() == "content of e"
-
-    def test_traverse_simplediv(self):
-        """
-        Disable the __future__.division when testing traversal.
-        """
-        for zipfile_abcde in self.zipfile_abcde():
-            code = compile(
-                source="zipp.Path(zipfile_abcde) / 'a'",
-                filename="(test)",
-                mode="eval",
-                dont_inherit=True,
-            )
-            eval(code)
 
     def test_pathlike_construction(self):
         """

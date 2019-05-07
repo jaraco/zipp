@@ -1,14 +1,9 @@
 # coding: utf-8
 
-from __future__ import division
-
 import io
-import sys
 import posixpath
 import zipfile
 import functools
-
-__metaclass__ = type
 
 
 class Path:
@@ -82,20 +77,9 @@ class Path:
         self.root = (
             root
             if isinstance(root, zipfile.ZipFile)
-            else zipfile.ZipFile(self._pathlib_compat(root))
+            else zipfile.ZipFile(root)
         )
         self.at = at
-
-    @staticmethod
-    def _pathlib_compat(path):
-        """
-        For path-like objects, convert to a filename for compatibility
-        on Python 3.6.1 and earlier.
-        """
-        try:
-            return path.__fspath__()
-        except AttributeError:
-            return str(path)
 
     @property
     def open(self):
@@ -141,7 +125,6 @@ class Path:
         return self.__repr.format(self=self)
 
     def __truediv__(self, add):
-        add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
         next_dir = posixpath.join(self.at, add, "")
         names = self._names()
@@ -157,6 +140,3 @@ class Path:
 
     def _names(self):
         return self._add_implied_dirs(self.root.namelist())
-
-    if sys.version_info < (3,):
-        __div__ = __truediv__
