@@ -75,11 +75,15 @@ class Path:
     >>> str(c)
     'abcde.zip/b/c.txt'
     """
-    __repr = '{self.__class__.__name__}({self.root.filename!r}, {self.at!r})'
 
-    def __init__(self, root, at=''):
-        self.root = root if isinstance(root, zipfile.ZipFile) \
+    __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
+
+    def __init__(self, root, at=""):
+        self.root = (
+            root
+            if isinstance(root, zipfile.ZipFile)
             else zipfile.ZipFile(self._pathlib_compat(root))
+        )
         self.at = at
 
     @staticmethod
@@ -99,7 +103,7 @@ class Path:
 
     @property
     def name(self):
-        return posixpath.basename(self.at.rstrip('/'))
+        return posixpath.basename(self.at.rstrip("/"))
 
     def read_text(self, *args, **kwargs):
         with self.open() as strm:
@@ -110,13 +114,13 @@ class Path:
             return strm.read()
 
     def _is_child(self, path):
-        return posixpath.dirname(path.at.rstrip('/')) == self.at.rstrip('/')
+        return posixpath.dirname(path.at.rstrip("/")) == self.at.rstrip("/")
 
     def _next(self, at):
         return Path(self.root, at)
 
     def is_dir(self):
-        return not self.at or self.at.endswith('/')
+        return not self.at or self.at.endswith("/")
 
     def is_file(self):
         return not self.is_dir()
@@ -139,19 +143,16 @@ class Path:
     def __truediv__(self, add):
         add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
-        next_dir = posixpath.join(self.at, add, '')
+        next_dir = posixpath.join(self.at, add, "")
         names = self._names()
-        return self._next(
-            next_dir if next not in names and next_dir in names else next
-        )
+        return self._next(next_dir if next not in names and next_dir in names else next)
 
     @staticmethod
     def _add_implied_dirs(names):
         return names + [
-            name + '/'
+            name + "/"
             for name in map(posixpath.dirname, names)
-            if name
-            and name + '/' not in names
+            if name and name + "/" not in names
         ]
 
     def _names(self):

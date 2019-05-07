@@ -21,6 +21,7 @@ except ImportError:
 
 try:
     import unittest
+
     unittest.TestCase.subTest
 except AttributeError:
     import unittest2 as unittest
@@ -38,10 +39,9 @@ def add_dirs(zipfile):
     """
     names = zipfile.namelist()
     consume(
-        zipfile.writestr(name + '/', b'')
+        zipfile.writestr(name + "/", b"")
         for name in map(posixpath.dirname, names)
-        if name
-        and name + '/' not in names
+        if name and name + "/" not in names
     )
     return zipfile
 
@@ -58,11 +58,11 @@ def build_abcde_files():
             └── e.txt
     """
     data = io.BytesIO()
-    zf = zipfile.ZipFile(data, 'w')
-    zf.writestr('a.txt', b'content of a')
-    zf.writestr('b/c.txt', b'content of c')
-    zf.writestr('b/d/e.txt', b'content of e')
-    zf.filename = 'abcde.zip'
+    zf = zipfile.ZipFile(data, "w")
+    zf.writestr("a.txt", b"content of a")
+    zf.writestr("b/c.txt", b"content of c")
+    zf.writestr("b/d/e.txt", b"content of e")
+    zf.filename = "abcde.zip"
     return zf
 
 
@@ -92,7 +92,7 @@ class TestEverything(unittest.TestCase):
             buffer = zipfile_abcde.fp
             zipfile_abcde.close()
             path = tmpdir / zipfile_abcde.filename
-            with path.open('wb') as strm:
+            with path.open("wb") as strm:
                 strm.write(buffer.getvalue())
             yield path
 
@@ -114,22 +114,22 @@ class TestEverything(unittest.TestCase):
             a, b = root.iterdir()
             with a.open() as strm:
                 data = strm.read()
-            assert data == b'content of a'
+            assert data == b"content of a"
 
     def test_read(self):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
             a, b = root.iterdir()
-            assert a.read_text() == 'content of a'
-            assert a.read_bytes() == b'content of a'
+            assert a.read_text() == "content of a"
+            assert a.read_bytes() == b"content of a"
 
     def test_traverse_truediv(self):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
-            a = root / 'a'
+            a = root / "a"
             assert a.is_file()
-            e = root / 'b' / 'd' / 'e.txt'
-            assert e.read_text() == 'content of e'
+            e = root / "b" / "d" / "e.txt"
+            assert e.read_text() == "content of e"
 
     def test_traverse_simplediv(self):
         """
@@ -138,8 +138,8 @@ class TestEverything(unittest.TestCase):
         for zipfile_abcde in self.zipfile_abcde():
             code = compile(
                 source="zipp.Path(zipfile_abcde) / 'a'",
-                filename='(test)',
-                mode='eval',
+                filename="(test)",
+                mode="eval",
                 dont_inherit=True,
             )
             eval(code)
@@ -155,4 +155,4 @@ class TestEverything(unittest.TestCase):
     def test_traverse_pathlike(self):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
-            root / pathlib.Path('a')
+            root / pathlib.Path("a")
