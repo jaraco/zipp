@@ -156,3 +156,9 @@ class TestEverything(unittest.TestCase):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
             root / pathlib.Path("a")
+
+    def test_parent(self):
+        for zipfile_abcde in self.zipfile_abcde():
+            root = zipp.Path(zipfile_abcde)
+            assert (root / 'a').parent.at == ''
+            assert (root / 'a' / 'b').parent.at == 'a/'
