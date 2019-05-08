@@ -123,6 +123,14 @@ class TestEverything(unittest.TestCase):
             assert a.read_text() == "content of a"
             assert a.read_bytes() == b"content of a"
 
+    def test_joinpath(self):
+        for zipfile_abcde in self.zipfile_abcde():
+            root = zipp.Path(zipfile_abcde)
+            a = root.joinpath("a")
+            assert a.is_file()
+            e = root.joinpath("b").joinpath("d").joinpath("e.txt")
+            assert e.read_text() == "content of e"
+
     def test_traverse_truediv(self):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
