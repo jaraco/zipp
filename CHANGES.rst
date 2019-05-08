@@ -1,3 +1,10 @@
+v0.5.0
+======
+
+Add ``.joinpath()`` method and ``.parent`` property.
+
+Now a backport release of the ``zipfile.Path`` class.
+
 v0.4.0
 ======
 
