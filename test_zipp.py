@@ -9,8 +9,6 @@ import shutil
 import pathlib
 import unittest
 
-import zipp
-
 consume = tuple
 
 
@@ -80,7 +78,7 @@ class TestEverything(unittest.TestCase):
 
     def test_iterdir_istype(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             assert root.is_dir()
             a, b = root.iterdir()
             assert a.is_file()
@@ -92,7 +90,7 @@ class TestEverything(unittest.TestCase):
 
     def test_open(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             a, b = root.iterdir()
             with a.open() as strm:
                 data = strm.read()
@@ -100,14 +98,14 @@ class TestEverything(unittest.TestCase):
 
     def test_read(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             a, b = root.iterdir()
             assert a.read_text() == "content of a"
             assert a.read_bytes() == b"content of a"
 
     def test_joinpath(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             a = root.joinpath("a")
             assert a.is_file()
             e = root.joinpath("b").joinpath("d").joinpath("e.txt")
@@ -115,7 +113,7 @@ class TestEverything(unittest.TestCase):
 
     def test_traverse_truediv(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             a = root / "a"
             assert a.is_file()
             e = root / "b" / "d" / "e.txt"
@@ -123,19 +121,19 @@ class TestEverything(unittest.TestCase):
 
     def test_pathlike_construction(self):
         """
-        zipp.Path should be constructable from a path-like object
+        zipfile.Path should be constructable from a path-like object
         """
         for zipfile_ondisk in self.zipfile_ondisk():
             pathlike = pathlib.Path(str(zipfile_ondisk))
-            zipp.Path(pathlike)
+            zipfile.Path(pathlike)
 
     def test_traverse_pathlike(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             root / pathlib.Path("a")
 
     def test_parent(self):
         for zipfile_abcde in self.zipfile_abcde():
-            root = zipp.Path(zipfile_abcde)
+            root = zipfile.Path(zipfile_abcde)
             assert (root / 'a').parent.at == ''
             assert (root / 'a' / 'b').parent.at == 'a/'
