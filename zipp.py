@@ -2,8 +2,11 @@
 
 import io
 import posixpath
-import zipfile
 import functools
+
+
+class ZipFile:
+    pass
 
 
 class Path:
@@ -20,7 +23,7 @@ class Path:
                 └── e.txt
 
     >>> data = io.BytesIO()
-    >>> zf = zipfile.ZipFile(data, 'w')
+    >>> zf = ZipFile(data, 'w')
     >>> zf.writestr('a.txt', 'content of a')
     >>> zf.writestr('b/c.txt', 'content of c')
     >>> zf.writestr('b/d/e.txt', 'content of e')
@@ -74,11 +77,7 @@ class Path:
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
 
     def __init__(self, root, at=""):
-        self.root = (
-            root
-            if isinstance(root, zipfile.ZipFile)
-            else zipfile.ZipFile(root)
-        )
+        self.root = root if isinstance(root, ZipFile) else ZipFile(root)
         self.at = at
 
     @property

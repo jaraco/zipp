@@ -4,10 +4,10 @@ import io
 import zipfile
 import posixpath
 import contextlib
-import tempfile
-import shutil
 import pathlib
 import unittest
+
+from test.support import temp_dir
 
 consume = tuple
 
@@ -46,16 +46,7 @@ def build_abcde_files():
     return zf
 
 
-@contextlib.contextmanager
-def tempdir():
-    tmpdir = tempfile.mkdtemp()
-    try:
-        yield pathlib.Path(tmpdir)
-    finally:
-        shutil.rmtree(tmpdir)
-
-
-class TestEverything(unittest.TestCase):
+class TestPath(unittest.TestCase):
     def setUp(self):
         self.fixtures = contextlib.ExitStack()
         self.addCleanup(self.fixtures.close)
@@ -67,7 +58,7 @@ class TestEverything(unittest.TestCase):
             yield add_dirs(build_abcde_files())
 
     def zipfile_ondisk(self):
-        tmpdir = self.fixtures.enter_context(tempdir())
+        tmpdir = pathlib.Path(self.fixtures.enter_context(temp_dir()))
         for zipfile_abcde in self.zipfile_abcde():
             buffer = zipfile_abcde.fp
             zipfile_abcde.close()
