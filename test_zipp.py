@@ -181,3 +181,11 @@ class TestEverything(unittest.TestCase):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
             assert (root / 'missing dir/').parent.at == ''
+
+    def test_root_name(self):
+        """
+        The name of the root should be the name of the zipfile
+        """
+        for zipfile_abcde in self.zipfile_abcde():
+            root = zipp.Path(zipfile_abcde)
+            assert root.name == 'abcde.zip'
