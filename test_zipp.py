@@ -175,3 +175,9 @@ class TestEverything(unittest.TestCase):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
             assert (root / 'b').parent.at == ''
+            assert (root / 'b/').parent.at == ''
+
+    def test_missing_dir_parent(self):
+        for zipfile_abcde in self.zipfile_abcde():
+            root = zipp.Path(zipfile_abcde)
+            assert (root / 'missing dir/').parent.at == ''
