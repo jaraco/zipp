@@ -3,6 +3,7 @@
 from __future__ import division
 
 import io
+import os
 import sys
 import posixpath
 import zipfile
@@ -103,7 +104,14 @@ class Path:
 
     @property
     def name(self):
-        return posixpath.basename(self.at.rstrip("/"))
+        return posixpath.basename(self.at.rstrip("/")) \
+            or os.path.basename(self._root_filename())
+
+    def _root_filename(self):
+        value = self.root.filename
+        if value is None:
+            raise ValueError("Zip file has no filename")
+        return value
 
     def read_text(self, *args, **kwargs):
         with self.open() as strm:
