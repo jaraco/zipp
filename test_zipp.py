@@ -189,3 +189,17 @@ class TestEverything(unittest.TestCase):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
             assert root.name == 'abcde.zip'
+
+    def test_root_name_unnamed(self):
+        """
+        It is an error to attempt to get the name of an unnamed zipfile.
+        """
+        for zipfile_abcde in self.zipfile_abcde():
+            root = zipp.Path(zipfile_abcde)
+            root.root.filename = None
+            try:
+                root.name
+            except ValueError:
+                pass
+            else:
+                raise AssertionError("did not raise")
