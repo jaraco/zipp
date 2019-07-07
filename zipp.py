@@ -159,7 +159,7 @@ class Path:
 
     @property
     def parent(self):
-        parent_at = posixpath.dirname(self.at)
+        parent_at = posixpath.dirname(self.at.rstrip('/'))
         if parent_at:
             parent_at += '/'
         return self._next(parent_at)
