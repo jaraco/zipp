@@ -1,3 +1,8 @@
+v0.5.2
+======
+
+#7: Parent of a directory now actually returns the parent.
+
 v0.5.1
 ======
 
