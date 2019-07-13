@@ -222,3 +222,8 @@ class TestEverything(unittest.TestCase):
                 pass
             else:
                 raise AssertionError("did not raise")
+
+            # .name and .parent should still work on subs
+            sub = root / "b"
+            assert sub.name == "b"
+            assert sub.parent

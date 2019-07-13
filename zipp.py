@@ -110,7 +110,7 @@ class Path:
 
     @property
     def name(self):
-        return self.filename.name
+        return pathlib.Path(self.at).name or self.filename.name
 
     @property
     def filename(self):
