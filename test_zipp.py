@@ -182,24 +182,43 @@ class TestEverything(unittest.TestCase):
             root = zipp.Path(zipfile_abcde)
             assert (root / 'missing dir/').parent.at == ''
 
+    def test_filename(self):
+        for zipfile_abcde in self.zipfile_abcde():
+            root = zipp.Path(zipfile_abcde)
+            assert root.filename == pathlib.Path('abcde.zip')
+
     def test_root_name(self):
         """
         The name of the root should be the name of the zipfile
         """
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
-            assert root.name == 'abcde.zip'
+            assert root.name == 'abcde.zip' == root.filename.name
 
-    def test_root_name_unnamed(self):
-        """
-        It is an error to attempt to get the name of an unnamed zipfile.
-        """
+    def test_root_parent(self):
         for zipfile_abcde in self.zipfile_abcde():
             root = zipp.Path(zipfile_abcde)
-            root.root.filename = None
+            assert root.parent == pathlib.Path('.')
+            root.root.filename = 'foo/bar.zip'
+            assert root.parent == pathlib.Path('foo')
+
+    def test_root_unnamed(self):
+        """
+        It is an error to attempt to get the name
+        or parent of an unnamed zipfile.
+        """
+        for zipfile_abcde in self.zipfile_abcde():
+            zipfile_abcde.filename = None
+            root = zipp.Path(zipfile_abcde)
             try:
                 root.name
-            except ValueError:
+            except TypeError:
+                pass
+            else:
+                raise AssertionError("did not raise")
+            try:
+                root.parent
+            except TypeError:
                 pass
             else:
                 raise AssertionError("did not raise")
