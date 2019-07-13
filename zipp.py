@@ -9,6 +9,12 @@ import posixpath
 import zipfile
 import functools
 
+try:
+    import pathlib
+except ImportError:
+    import pathlib2 as pathlib
+
+
 __metaclass__ = type
 
 
@@ -104,14 +110,11 @@ class Path:
 
     @property
     def name(self):
-        return posixpath.basename(self.at.rstrip("/")) \
-            or os.path.basename(self._root_filename())
+        return self.filename.name
 
-    def _root_filename(self):
-        value = self.root.filename
-        if value is None:
-            raise ValueError("Zip file has no filename")
-        return value
+    @property
+    def filename(self):
+        return pathlib.Path(self.root.filename).joinpath(self.at)
 
     def read_text(self, *args, **kwargs):
         with self.open() as strm:
@@ -167,6 +170,8 @@ class Path:
 
     @property
     def parent(self):
+        if not self.at:
+            return self.filename.parent
         parent_at = posixpath.dirname(self.at.rstrip('/'))
         if parent_at:
             parent_at += '/'
