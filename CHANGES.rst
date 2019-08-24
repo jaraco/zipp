@@ -1,8 +1,11 @@
-v0.5.3
+v0.6.0
 ======
 
 #12: When adding implicit dirs, ensure that ancestral directories
 are added and that duplicates are excluded.
+
+The library now relies on
+`more_itertools <https://pypi.org/project/more_itertools>`_.
 
 v0.5.2
 ======
