@@ -1,3 +1,9 @@
+v0.5.3
+======
+
+#12: When adding implicit dirs, ensure that ancestral directories
+are added and that duplicates are excluded.
+
 v0.5.2
 ======
 
