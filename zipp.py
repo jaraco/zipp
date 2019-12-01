@@ -9,8 +9,6 @@ import zipfile
 import functools
 import itertools
 
-import more_itertools
-
 __metaclass__ = type
 
 
@@ -195,12 +193,14 @@ class Path:
 
     @staticmethod
     def _implied_dirs(names):
-        return more_itertools.unique_everseen(
-            parent + "/"
-            for name in names
-            for parent in _parents(name)
-            if parent + "/" not in names
-        )
+        seen = set(names)
+        for parent in (
+            p + posixpath.sep
+            for p in itertools.chain.from_iterable(map(_parents, names))
+            if p + posixpath.sep not in seen
+        ):
+            seen.add(parent)
+            yield parent
 
     @classmethod
     def _add_implied_dirs(cls, names):
