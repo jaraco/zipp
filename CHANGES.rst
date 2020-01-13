@@ -1,3 +1,9 @@
+v1.0.0
+======
+
+Re-release of 0.6 to correspond with release as found in
+Python 3.8.
+
 v0.6.0
 ======
 
