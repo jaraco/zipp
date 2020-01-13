@@ -3,11 +3,14 @@
 
 .. image:: https://img.shields.io/pypi/pyversions/zipp.svg
 
+.. image:: https://dev.azure.com/jaraco/zipp/_apis/build/status/jaraco.zipp?branchName=master
+   :target: https://dev.azure.com/jaraco/zipp/_build/latest?definitionId=1&branchName=master
+
 .. image:: https://img.shields.io/travis/jaraco/zipp/master.svg
    :target: https://travis-ci.org/jaraco/zipp
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-   :target: https://github.com/ambv/black
+   :target: https://github.com/psf/black
    :alt: Code style: Black
 
 .. image:: https://img.shields.io/appveyor/ci/jaraco/zipp/master.svg
