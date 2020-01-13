@@ -129,6 +129,7 @@ class Path:
             else zipfile.ZipFile(self._pathlib_compat(root))
         )
         self.at = at
+        self.__names = None
 
     @staticmethod
     def _pathlib_compat(path):
@@ -214,7 +215,9 @@ class Path:
         return self._next(parent_at)
 
     def _names(self):
-        return self._add_implied_dirs(self.root.namelist())
+        if self.__names is None:
+            self.__names = self._add_implied_dirs(self.root.namelist())
+        return self.__names
 
     if sys.version_info < (3,):
         __div__ = __truediv__
