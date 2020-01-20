@@ -6,24 +6,10 @@ import io
 import zipfile
 import posixpath
 import contextlib
+import pathlib
+import unittest
 import tempfile
 import shutil
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
-
-if not hasattr(contextlib, 'ExitStack'):
-    import contextlib2
-    contextlib.ExitStack = contextlib2.ExitStack
-
-try:
-    import unittest
-
-    unittest.TestCase.subTest
-except AttributeError:
-    import unittest2 as unittest
 
 import zipp
 
