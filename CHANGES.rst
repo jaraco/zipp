@@ -1,3 +1,19 @@
+v2.0.1
+======
+
+#30: Corrected version inference (from jaraco/skeleton#12).
+
+v2.0.0
+======
+
+Require Python 3.6 or later.
+
+v1.0.0
+======
+
+Re-release of 0.6 to correspond with release as found in
+Python 3.8.
+
 v0.6.0
 ======
 

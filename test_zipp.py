@@ -4,26 +4,11 @@ from __future__ import division, unicode_literals
 
 import io
 import zipfile
-import posixpath
 import contextlib
+import pathlib
+import unittest
 import tempfile
 import shutil
-
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
-
-if not hasattr(contextlib, 'ExitStack'):
-    import contextlib2
-    contextlib.ExitStack = contextlib2.ExitStack
-
-try:
-    import unittest
-
-    unittest.TestCase.subTest
-except AttributeError:
-    import unittest2 as unittest
 
 import zipp
 
@@ -122,6 +107,14 @@ class TestPath(unittest.TestCase):
             h, = g.iterdir()
             i, = h.iterdir()
             assert i.is_file()
+
+    def test_subdir_is_dir(self):
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            assert (root / 'b').is_dir()
+            assert (root / 'b/').is_dir()
+            assert (root / 'g').is_dir()
+            assert (root / 'g/').is_dir()
 
     def test_open(self):
         for alpharep in self.zipfile_alpharep():
