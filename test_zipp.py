@@ -130,6 +130,11 @@ class TestPath(unittest.TestCase):
             assert (root / 'g').is_dir()
             assert (root / 'g/').is_dir()
 
+    def test_subdir_equality(self):
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            assert (root / 'b') == (root / 'b/')
+
     def test_open(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)

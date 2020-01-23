@@ -218,3 +218,6 @@ class Path:
 
     if sys.version_info < (3,):
         __div__ = __truediv__
+
+    def __eq__(self, other):
+        return vars(self) == vars(other)
