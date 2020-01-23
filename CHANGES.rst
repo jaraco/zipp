@@ -1,3 +1,8 @@
+v2.0.1
+======
+
+#30: Corrected version inference (from jaraco/skeleton#12).
+
 v2.0.0
 ======
 
