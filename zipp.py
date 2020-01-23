@@ -206,7 +206,7 @@ class Path:
 
     @classmethod
     def _add_implied_dirs(cls, names):
-        return itertools.chain(names, cls._implied_dirs(names))
+        return names + list(cls._implied_dirs(names))
 
     @property
     def parent(self):
