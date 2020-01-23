@@ -122,6 +122,14 @@ class TestPath(unittest.TestCase):
             i, = h.iterdir()
             assert i.is_file()
 
+    def test_subdir_is_dir(self):
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            assert (root / 'b').is_dir()
+            assert (root / 'b/').is_dir()
+            assert (root / 'g').is_dir()
+            assert (root / 'g/').is_dir()
+
     def test_open(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
