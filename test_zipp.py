@@ -5,26 +5,12 @@ from __future__ import division, unicode_literals
 import io
 import zipfile
 import contextlib
+import pathlib
+import unittest
 import tempfile
 import shutil
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
-
 import zipp
-
-if not hasattr(contextlib, 'ExitStack'):
-    import contextlib2
-    contextlib.ExitStack = contextlib2.ExitStack
-
-try:
-    import unittest
-
-    unittest.TestCase.subTest
-except AttributeError:
-    import unittest2 as unittest
 
 __metaclass__ = type
 consume = tuple
