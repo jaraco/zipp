@@ -76,6 +76,18 @@ class TestPath(unittest.TestCase):
         self.fixtures = contextlib.ExitStack()
         self.addCleanup(self.fixtures.close)
 
+    HUGE_ZIPFILE_NUM_ENTRIES = 50000
+
+    def huge_zipfile(self):
+        """Create an on-disk zipfile with a huge number of entries entries."""
+        tmpfile = pathlib.Path(self.fixtures.enter_context(temp_dir())) / 'huge.zip'
+        zf = zipfile.ZipFile(tmpfile, "w")
+        for x in range(0, self.HUGE_ZIPFILE_NUM_ENTRIES):
+            x_str = str(x)
+            zf.writestr(x_str, x_str.encode('ascii'))
+        zf.close()
+        yield str(tmpfile)
+
     def zipfile_alpharep(self):
         with self.subTest():
             yield build_alpharep_fixture()
@@ -92,15 +104,23 @@ class TestPath(unittest.TestCase):
                 strm.write(buffer.getvalue())
             yield path
 
-    def test_iterdir_and_types(self):
+    def all_test_zipfiles(self):
+        # Test on zipfiles open in 'w' mode.
         for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+            yield alpharep
+        # Test on zipfiles we open in 'r' mode (so tests namelist memoization).
+        for zipfile_ondisk in self.zipfile_ondisk():
+            yield zipfile_ondisk
+
+    def test_iterdir_and_types(self):
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             assert root.is_dir()
-            a, b, g = root.iterdir()
+            a, b, g = sorted(root.iterdir())
             assert a.is_file()
             assert b.is_dir()
             assert g.is_dir()
-            c, f, d = b.iterdir()
+            c, d, f = sorted(b.iterdir())
             assert c.is_file() and f.is_file()
             e, = d.iterdir()
             assert e.is_file()
@@ -109,39 +129,39 @@ class TestPath(unittest.TestCase):
             assert i.is_file()
 
     def test_subdir_is_dir(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             assert (root / 'b').is_dir()
             assert (root / 'b/').is_dir()
             assert (root / 'g').is_dir()
             assert (root / 'g/').is_dir()
 
     def test_open(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
-            a, b, g = root.iterdir()
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
+            a, b, g = sorted(root.iterdir())
             with a.open() as strm:
                 data = strm.read()
             assert data == b"content of a"
 
     def test_read(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
-            a, b, g = root.iterdir()
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
+            a, b, g = sorted(root.iterdir())
             assert a.read_text() == "content of a"
             assert a.read_bytes() == b"content of a"
 
     def test_joinpath(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             a = root.joinpath("a")
             assert a.is_file()
             e = root.joinpath("b").joinpath("d").joinpath("e.txt")
             assert e.read_text() == "content of e"
 
     def test_traverse_truediv(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             a = root / "a"
             assert a.is_file()
             e = root / "b" / "d" / "e.txt"
@@ -169,23 +189,35 @@ class TestPath(unittest.TestCase):
             zipp.Path(pathlike)
 
     def test_traverse_pathlike(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             root / pathlib.Path("a")
 
     def test_parent(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             assert (root / 'a').parent.at == ''
             assert (root / 'a' / 'b').parent.at == 'a/'
 
     def test_dir_parent(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             assert (root / 'b').parent.at == ''
             assert (root / 'b/').parent.at == ''
 
     def test_missing_dir_parent(self):
-        for alpharep in self.zipfile_alpharep():
-            root = zipp.Path(alpharep)
+        for zipf in self.all_test_zipfiles():
+            root = zipp.Path(zipf)
             assert (root / 'missing dir/').parent.at == ''
+
+    def test_huge_zipfile(self):
+        for  huge_zipfile in self.huge_zipfile():
+            root = zipp.Path(huge_zipfile)
+            n = 0
+            # Iterate over all entries and run `joinpath()` on each one. If memoization works
+            # correctly, this will be linear time overall.  If not, it'll be quadratic and so
+            # this test will take absurdly long to complete (it probably never will, in practice).
+            for entry in root.iterdir():
+                entry.joinpath('suffix')
+                n += 1
+            assert n == self.HUGE_ZIPFILE_NUM_ENTRIES  # Check that we actually iterated.

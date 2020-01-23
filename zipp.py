@@ -55,6 +55,7 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
+@functools.total_ordering
 class Path:
     """
     A pathlib-compatible interface for zip files.
@@ -129,6 +130,8 @@ class Path:
             else zipfile.ZipFile(self._pathlib_compat(root))
         )
         self.at = at
+        # If the zipfile is read-only, we can (lazily) memoize its names.
+        self.__names_set = None
 
     @staticmethod
     def _pathlib_compat(path):
@@ -161,7 +164,11 @@ class Path:
         return posixpath.dirname(path.at.rstrip("/")) == self.at.rstrip("/")
 
     def _next(self, at):
-        return Path(self.root, at)
+        ret = Path(self.root, at)
+        # The namelist depends only on the root, so we can propagate the memoization.
+        # Note: this is critical to getting the full benefit of memoization when iterating.
+        ret.__names_set = self.__names_set
+        return ret
 
     def is_dir(self):
         return not self.at or self.at.endswith("/")
@@ -170,13 +177,22 @@ class Path:
         return not self.is_dir()
 
     def exists(self):
-        return self.at in self._names()
+        return self.at in self._names_set()
 
     def iterdir(self):
+        # Note: Makes no guarantee about iteration order (neither does pathlib's iterdir).
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        subs = map(self._next, self._names())
+        subs = map(self._next, self._names_set())
         return filter(self._is_child, subs)
+
+    def __eq__(self, other):
+        return self.root == other.root and self.at == other.at
+
+    def __lt__(self, other):
+        if self.root != other.root:
+            raise ValueError("Can't compare Path objects from different roots")
+        return self.at < other.at
 
     def __str__(self):
         return posixpath.join(self.root.filename, self.at)
@@ -188,7 +204,7 @@ class Path:
         add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
         next_dir = posixpath.join(self.at, add, "")
-        names = self._names()
+        names = self._names_set()
         return self._next(next_dir if next not in names and next_dir in names else next)
 
     __truediv__ = joinpath
@@ -204,7 +220,9 @@ class Path:
 
     @classmethod
     def _add_implied_dirs(cls, names):
-        return names + list(cls._implied_dirs(names))
+        ret = set(names)
+        ret.update(cls._implied_dirs(names))
+        return ret
 
     @property
     def parent(self):
@@ -213,8 +231,13 @@ class Path:
             parent_at += '/'
         return self._next(parent_at)
 
-    def _names(self):
-        return self._add_implied_dirs(self.root.namelist())
+    def _names_set(self):
+        if self.__names_set is not None:
+            return self.__names_set
+        ret = self._add_implied_dirs(self.root.namelist())
+        if self.root.mode == 'r':  # The zipfile is in read mode, so we can memoize its names.
+            self.__names_set = ret
+        return ret
 
     if sys.version_info < (3,):
         __div__ = __truediv__
