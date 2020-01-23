@@ -4,7 +4,6 @@ from __future__ import division, unicode_literals
 
 import io
 import zipfile
-import posixpath
 import contextlib
 import tempfile
 import shutil
@@ -13,6 +12,8 @@ try:
     import pathlib
 except ImportError:
     import pathlib2 as pathlib
+
+import zipp
 
 if not hasattr(contextlib, 'ExitStack'):
     import contextlib2
@@ -24,8 +25,6 @@ try:
     unittest.TestCase.subTest
 except AttributeError:
     import unittest2 as unittest
-
-import zipp
 
 __metaclass__ = type
 consume = tuple
