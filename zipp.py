@@ -1,5 +1,4 @@
 import io
-import sys
 import posixpath
 import zipfile
 import functools
@@ -210,6 +209,3 @@ class Path:
 
     def _names(self):
         return self._add_implied_dirs(self.root.namelist())
-
-    if sys.version_info < (3,):
-        __div__ = __truediv__

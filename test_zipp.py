@@ -1,7 +1,3 @@
-# coding: utf-8
-
-from __future__ import division, unicode_literals
-
 import io
 import zipfile
 import contextlib
@@ -12,7 +8,6 @@ import shutil
 
 import zipp
 
-__metaclass__ = type
 consume = tuple
 
 
