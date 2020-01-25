@@ -200,14 +200,14 @@ class TestPath(unittest.TestCase):
     HUGE_ZIPFILE_NUM_ENTRIES = 50000
 
     def huge_zipfile(self):
-        """Create an on-disk zipfile with a huge number of entries entries."""
-        tmpfile = pathlib.Path(self.fixtures.enter_context(temp_dir())) / 'huge.zip'
-        zf = zipfile.ZipFile(tmpfile, "w")
-        for x in range(0, self.HUGE_ZIPFILE_NUM_ENTRIES):
-            x_str = str(x)
-            zf.writestr(x_str, x_str.encode('ascii'))
+        """Create a read-only zipfile with a huge number of entries entries."""
+        strm = io.BytesIO()
+        zf = zipfile.ZipFile(strm, "w")
+        for entry in map(str, range(self.HUGE_ZIPFILE_NUM_ENTRIES)):
+            zf.writestr(entry, entry)
         zf.close()
-        yield str(tmpfile)
+        zf.mode = 'r'
+        yield zf
 
     def test_joinpath_constant_time(self):
         """
