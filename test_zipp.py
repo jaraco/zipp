@@ -184,3 +184,19 @@ class TestPath(unittest.TestCase):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
             assert (root / 'missing dir/').parent.at == ''
+
+    def test_mutability(self):
+        """
+        If the underlying zipfile is changed, the Path object should
+        reflect that change.
+        """
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            alpharep.writestr('foo.txt', 'foo')
+            alpharep.writestr('bar/baz.txt', 'baz')
+            assert any(
+                child.name == 'foo.txt'
+                for child in root.iterdir())
+            assert (root / 'foo.txt').read_text() == 'foo'
+            baz, = (root / 'bar').iterdir()
+            assert baz.read_text() == 'baz'
