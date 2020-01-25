@@ -55,19 +55,19 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
-class FastZip:
+class FastZip(zipfile.ZipFile):
     """
-    Wrapper around a zipfile.ZipFile to ensure implicit
+    ZipFile subclass to ensure implicit
     dirs exist and are resolved rapidly.
     """
-    def __init__(self, zipfile):
-        self.zipfile = zipfile
-        self.__names = zipfile.namelist()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__setup_caches()
+
+    def __setup_caches(self):
+        self.__names = super().namelist()
         self.__names += self._implied_dirs(self.__names)
         self.__lookup = set(self.__names)
-
-    def __getattr__(self, *args, **kwargs):
-        return getattr(self.zipfile, *args, **kwargs)
 
     def find(self, name):
         if name not in self.__lookup and name + '/' in self.__lookup:
@@ -87,6 +87,34 @@ class FastZip:
 
     def namelist(self):
         return self.__names
+
+    @classmethod
+    def make(cls, source):
+        """
+        Given a source (filename or zipfile), return an
+        appropriate subclass.
+        """
+        if isinstance(source, cls):
+            return source
+
+        if not isinstance(source, zipfile.ZipFile):
+            return cls(_pathlib_compat(source))
+
+        res = cls.__new__(cls)
+        vars(res).update(vars(source))
+        res.__setup_caches()
+        return res
+
+
+def _pathlib_compat(path):
+    """
+    For path-like objects, convert to a filename for compatibility
+    on Python 3.6.1 and earlier.
+    """
+    try:
+        return path.__fspath__()
+    except AttributeError:
+        return str(path)
 
 
 class Path:
@@ -157,27 +185,8 @@ class Path:
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
 
     def __init__(self, root, at=""):
-        self.root = (
-            root
-            if isinstance(root, FastZip) else
-            FastZip(
-                root
-                if isinstance(root, zipfile.ZipFile)
-                else zipfile.ZipFile(self._pathlib_compat(root))
-            )
-        )
+        self.root = FastZip.make(root)
         self.at = at
-
-    @staticmethod
-    def _pathlib_compat(path):
-        """
-        For path-like objects, convert to a filename for compatibility
-        on Python 3.6.1 and earlier.
-        """
-        try:
-            return path.__fspath__()
-        except AttributeError:
-            return str(path)
 
     @property
     def open(self):
@@ -223,8 +232,7 @@ class Path:
         return self.__repr.format(self=self)
 
     def joinpath(self, add):
-        add = self._pathlib_compat(add)
-        next = posixpath.join(self.at, add)
+        next = posixpath.join(self.at, _pathlib_compat(add))
         return self._next(self.root.find(next))
 
     __truediv__ = joinpath
