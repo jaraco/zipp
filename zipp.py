@@ -55,6 +55,40 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
+class FastZip:
+    """
+    Wrapper around a zipfile.ZipFile to ensure implicit
+    dirs exist and are resolved rapidly.
+    """
+    def __init__(self, zipfile):
+        self.zipfile = zipfile
+        self.__names = zipfile.namelist()
+        self.__names += self._implied_dirs(self.__names)
+        self.__lookup = set(self.__names)
+
+    def __getattr__(self, *args, **kwargs):
+        return getattr(self.zipfile, *args, **kwargs)
+
+    def find(self, name):
+        if name not in self.__lookup and name + '/' in self.__lookup:
+            return name + '/'
+        return name
+
+    @staticmethod
+    def _implied_dirs(names):
+        parents = itertools.chain.from_iterable(map(_parents, names))
+        # Deduplicate entries in original order
+        implied_dirs = OrderedDict.fromkeys(
+            p + posixpath.sep for p in parents
+            # Cast names to a set for O(1) lookups
+            if p + posixpath.sep not in set(names)
+        )
+        return implied_dirs
+
+    def namelist(self):
+        return self.__names
+
+
 class Path:
     """
     A pathlib-compatible interface for zip files.
@@ -125,8 +159,12 @@ class Path:
     def __init__(self, root, at=""):
         self.root = (
             root
-            if isinstance(root, zipfile.ZipFile)
-            else zipfile.ZipFile(self._pathlib_compat(root))
+            if isinstance(root, FastZip) else
+            FastZip(
+                root
+                if isinstance(root, zipfile.ZipFile)
+                else zipfile.ZipFile(self._pathlib_compat(root))
+            )
         )
         self.at = at
 
@@ -170,12 +208,12 @@ class Path:
         return not self.is_dir()
 
     def exists(self):
-        return self.at in self._names()
+        return self.at in self.root.namelist()
 
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        subs = map(self._next, self._names())
+        subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)
 
     def __str__(self):
@@ -187,24 +225,9 @@ class Path:
     def joinpath(self, add):
         add = self._pathlib_compat(add)
         next = posixpath.join(self.at, add)
-        next_dir = posixpath.join(self.at, add, "")
-        names = self._names()
-        return self._next(next_dir if next not in names and next_dir in names else next)
+        return self._next(self.root.find(next))
 
     __truediv__ = joinpath
-
-    @staticmethod
-    def _implied_dirs(names):
-        return more_itertools.unique_everseen(
-            parent + "/"
-            for name in names
-            for parent in _parents(name)
-            if parent + "/" not in names
-        )
-
-    @classmethod
-    def _add_implied_dirs(cls, names):
-        return names + list(cls._implied_dirs(names))
 
     @property
     def parent(self):
@@ -212,9 +235,6 @@ class Path:
         if parent_at:
             parent_at += '/'
         return self._next(parent_at)
-
-    def _names(self):
-        return self._add_implied_dirs(self.root.namelist())
 
     if sys.version_info < (3,):
         __div__ = __truediv__
