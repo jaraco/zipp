@@ -1,17 +1,10 @@
-# coding: utf-8
-
-from __future__ import division
-
 import io
 import sys
 import posixpath
 import zipfile
 import functools
 import itertools
-
-import more_itertools
-
-__metaclass__ = type
+from collections import OrderedDict
 
 
 def _parents(path):
@@ -211,12 +204,14 @@ class Path:
 
     @staticmethod
     def _implied_dirs(names):
-        return more_itertools.unique_everseen(
-            parent + "/"
-            for name in names
-            for parent in _parents(name)
-            if parent + "/" not in names
+        parents = itertools.chain.from_iterable(map(_parents, names))
+        # Deduplicate entries in original order
+        implied_dirs = OrderedDict.fromkeys(
+            p + posixpath.sep for p in parents
+            # Cast names to a set for O(1) lookups
+            if p + posixpath.sep not in set(names)
         )
+        return iter(implied_dirs)
 
     @classmethod
     def _add_implied_dirs(cls, names):
