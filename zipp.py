@@ -3,6 +3,7 @@ import posixpath
 import zipfile
 import functools
 import itertools
+import contextlib
 from collections import OrderedDict
 
 
@@ -78,18 +79,16 @@ class FastZip(CompleteDirs):
     ZipFile subclass to ensure implicit
     dirs exist and are resolved rapidly.
     """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__setup_caches()
-
-    def __setup_caches(self):
-        self.__names = super().namelist()
-        self.__lookup = super()._name_set()
-
     def namelist(self):
+        with contextlib.suppress(AttributeError):
+            return self.__names
+        self.__names = super().namelist()
         return self.__names
 
     def _name_set(self):
+        with contextlib.suppress(AttributeError):
+            return self.__lookup
+        self.__lookup = super()._name_set()
         return self.__lookup
 
     @classmethod
@@ -106,7 +105,6 @@ class FastZip(CompleteDirs):
 
         res = cls.__new__(cls)
         vars(res).update(vars(source))
-        res.__setup_caches()
         return res
 
 
