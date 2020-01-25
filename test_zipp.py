@@ -6,6 +6,8 @@ import unittest
 import tempfile
 import shutil
 
+import jaraco.itertools
+
 import zipp
 
 consume = tuple
@@ -16,7 +18,7 @@ def add_dirs(zf):
     Given a writable zip file zf, inject directory entries for
     any directories implied by the presence of children.
     """
-    for name in zipp.Path._implied_dirs(zf.namelist()):
+    for name in zipp.CompleteDirs._implied_dirs(zf.namelist()):
         zf.writestr(name, b"")
     return zf
 
@@ -201,3 +203,25 @@ class TestPath(unittest.TestCase):
             assert (root / 'foo.txt').read_text() == 'foo'
             baz, = (root / 'bar').iterdir()
             assert baz.read_text() == 'baz'
+
+    HUGE_ZIPFILE_NUM_ENTRIES = 2 ** 13
+
+    def huge_zipfile(self):
+        """Create a read-only zipfile with a huge number of entries entries."""
+        strm = io.BytesIO()
+        zf = zipfile.ZipFile(strm, "w")
+        for entry in map(str, range(self.HUGE_ZIPFILE_NUM_ENTRIES)):
+            zf.writestr(entry, entry)
+        zf.mode = 'r'
+        return zf
+
+    def test_joinpath_constant_time(self):
+        """
+        Ensure joinpath on items in zipfile is linear time.
+        """
+        root = zipp.Path(self.huge_zipfile())
+        entries = jaraco.itertools.Counter(root.iterdir())
+        for entry in entries:
+            entry.joinpath('suffix')
+        # Check the file iterated all items
+        assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES

@@ -1,3 +1,17 @@
+v2.1.0
+======
+
+#32: Merge with v1.1.0.
+
+v1.1.0
+======
+
+#32: For read-only zip files, complexity of ``.exists`` and
+``joinpath`` is now constant time instead of ``O(n)``, preventing
+quadratic time in common use-cases and rendering large
+zip files unusable for Path. Big thanks to Benjy Weinberger
+for the bug report and contributed fix (#33).
+
 v2.0.1
 ======
 
