@@ -232,7 +232,7 @@ class Path:
         return not self.is_dir()
 
     def exists(self):
-        return self.at in self.root.namelist()
+        return self.at in self.root._name_set()
 
     def iterdir(self):
         if not self.is_dir():
