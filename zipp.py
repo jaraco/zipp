@@ -1,7 +1,3 @@
-# coding: utf-8
-
-from __future__ import division
-
 import io
 import sys
 import posixpath
@@ -9,8 +5,6 @@ import zipfile
 import functools
 import itertools
 from collections import OrderedDict
-
-__metaclass__ = type
 
 
 def _parents(path):
