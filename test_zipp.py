@@ -199,7 +199,24 @@ class TestPath(unittest.TestCase):
             root = zipp.Path(alpharep)
             assert (root / 'missing dir/').parent.at == ''
 
-    HUGE_ZIPFILE_NUM_ENTRIES = 50000
+    def test_mutability(self):
+        """
+        If the underlying zipfile is changed, the Path object should
+        reflect that change.
+        """
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            a, b, g = root.iterdir()
+            alpharep.writestr('foo.txt', 'foo')
+            alpharep.writestr('bar/baz.txt', 'baz')
+            assert any(
+                child.name == 'foo.txt'
+                for child in root.iterdir())
+            assert (root / 'foo.txt').read_text() == 'foo'
+            baz, = (root / 'bar').iterdir()
+            assert baz.read_text() == 'baz'
+
+    HUGE_ZIPFILE_NUM_ENTRIES = 2 ** 13
 
     def huge_zipfile(self):
         """Create a read-only zipfile with a huge number of entries entries."""
