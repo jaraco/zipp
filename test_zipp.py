@@ -192,6 +192,7 @@ class TestPath(unittest.TestCase):
         """
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
+            a, b, g = root.iterdir()
             alpharep.writestr('foo.txt', 'foo')
             alpharep.writestr('bar/baz.txt', 'baz')
             assert any(
