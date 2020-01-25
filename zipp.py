@@ -97,11 +97,15 @@ class FastZip(CompleteDirs):
         Given a source (filename or zipfile), return an
         appropriate subclass.
         """
-        if isinstance(source, cls):
+        if isinstance(source, CompleteDirs):
             return source
 
         if not isinstance(source, zipfile.ZipFile):
             return cls(_pathlib_compat(source))
+
+        # Only allow for FastPath when supplied zipfile is read-only
+        if 'r' not in source.mode:
+            cls = CompleteDirs
 
         res = cls.__new__(cls)
         vars(res).update(vars(source))
