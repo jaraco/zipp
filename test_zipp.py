@@ -204,7 +204,7 @@ class TestPath(unittest.TestCase):
             baz, = (root / 'bar').iterdir()
             assert baz.read_text() == 'baz'
 
-    HUGE_ZIPFILE_NUM_ENTRIES = 50000
+    HUGE_ZIPFILE_NUM_ENTRIES = 2 ** 13
 
     def huge_zipfile(self):
         """Create a read-only zipfile with a huge number of entries entries."""
