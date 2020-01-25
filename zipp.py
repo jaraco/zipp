@@ -82,24 +82,6 @@ class CompleteDirs(zipfile.ZipFile):
         dir_match = name not in names and dirname in names
         return dirname if dir_match else name
 
-
-class FastZip(CompleteDirs):
-    """
-    ZipFile subclass to ensure implicit
-    dirs exist and are resolved rapidly.
-    """
-    def namelist(self):
-        with contextlib.suppress(AttributeError):
-            return self.__names
-        self.__names = super().namelist()
-        return self.__names
-
-    def _name_set(self):
-        with contextlib.suppress(AttributeError):
-            return self.__lookup
-        self.__lookup = super()._name_set()
-        return self.__lookup
-
     @classmethod
     def make(cls, source):
         """
@@ -119,6 +101,24 @@ class FastZip(CompleteDirs):
         res = cls.__new__(cls)
         vars(res).update(vars(source))
         return res
+
+
+class FastZip(CompleteDirs):
+    """
+    ZipFile subclass to ensure implicit
+    dirs exist and are resolved rapidly.
+    """
+    def namelist(self):
+        with contextlib.suppress(AttributeError):
+            return self.__names
+        self.__names = super().namelist()
+        return self.__names
+
+    def _name_set(self):
+        with contextlib.suppress(AttributeError):
+            return self.__lookup
+        self.__lookup = super()._name_set()
+        return self.__lookup
 
 
 def _pathlib_compat(path):
