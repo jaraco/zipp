@@ -68,9 +68,9 @@ class CompleteDirs(zipfile.ZipFile):
 
     def find(self, name):
         names = self._name_set()
-        if name not in names and name + '/' in names:
-            return name + '/'
-        return name
+        dirname = name + '/'
+        dir_match = name not in names and dirname in names
+        return dirname if dir_match else name
 
 
 class FastZip(CompleteDirs):
