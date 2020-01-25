@@ -4,7 +4,6 @@ from __future__ import division, unicode_literals
 
 import io
 import zipfile
-import posixpath
 import contextlib
 import tempfile
 import shutil
@@ -25,6 +24,8 @@ try:
 except AttributeError:
     import unittest2 as unittest
 
+import jaraco.itertools
+
 import zipp
 
 __metaclass__ = type
@@ -36,7 +37,7 @@ def add_dirs(zf):
     Given a writable zip file zf, inject directory entries for
     any directories implied by the presence of children.
     """
-    for name in zipp.Path._implied_dirs(zf.namelist()):
+    for name in zipp.CompleteDirs._implied_dirs(zf.namelist()):
         zf.writestr(name, b"")
     return zf
 
@@ -196,3 +197,42 @@ class TestPath(unittest.TestCase):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
             assert (root / 'missing dir/').parent.at == ''
+
+    def test_mutability(self):
+        """
+        If the underlying zipfile is changed, the Path object should
+        reflect that change.
+        """
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            a, b, g = root.iterdir()
+            alpharep.writestr('foo.txt', b'foo')
+            alpharep.writestr('bar/baz.txt', b'baz')
+            assert any(
+                child.name == 'foo.txt'
+                for child in root.iterdir())
+            assert (root / 'foo.txt').read_text() == 'foo'
+            baz, = (root / 'bar').iterdir()
+            assert baz.read_text() == 'baz'
+
+    HUGE_ZIPFILE_NUM_ENTRIES = 2 ** 13
+
+    def huge_zipfile(self):
+        """Create a read-only zipfile with a huge number of entries entries."""
+        strm = io.BytesIO()
+        zf = zipfile.ZipFile(strm, "w")
+        for entry in map(str, range(self.HUGE_ZIPFILE_NUM_ENTRIES)):
+            zf.writestr(entry, entry)
+        zf.mode = 'r'
+        return zf
+
+    def test_joinpath_constant_time(self):
+        """
+        Ensure joinpath on items in zipfile is linear time.
+        """
+        root = zipp.Path(self.huge_zipfile())
+        entries = jaraco.itertools.Counter(root.iterdir())
+        for entry in entries:
+            entry.joinpath('suffix')
+        # Check the file iterated all items
+        assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
