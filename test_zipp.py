@@ -4,7 +4,6 @@ from __future__ import division, unicode_literals
 
 import io
 import zipfile
-import posixpath
 import contextlib
 import tempfile
 import shutil
@@ -207,8 +206,8 @@ class TestPath(unittest.TestCase):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
             a, b, g = root.iterdir()
-            alpharep.writestr('foo.txt', 'foo')
-            alpharep.writestr('bar/baz.txt', 'baz')
+            alpharep.writestr('foo.txt', b'foo')
+            alpharep.writestr('bar/baz.txt', b'baz')
             assert any(
                 child.name == 'foo.txt'
                 for child in root.iterdir())
