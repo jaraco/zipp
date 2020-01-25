@@ -114,7 +114,7 @@ class CompleteDirs(zipfile.ZipFile):
         return res
 
 
-class FastZip(CompleteDirs):
+class FastLookup(CompleteDirs):
     """
     ZipFile subclass to ensure implicit
     dirs exist and are resolved rapidly.
@@ -211,7 +211,7 @@ class Path:
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
 
     def __init__(self, root, at=""):
-        self.root = FastZip.make(root)
+        self.root = FastLookup.make(root)
         self.at = at
 
     @property
