@@ -6,6 +6,8 @@ import unittest
 import tempfile
 import shutil
 
+import jaraco.itertools
+
 import zipp
 
 consume = tuple
@@ -193,19 +195,16 @@ class TestPath(unittest.TestCase):
         zf = zipfile.ZipFile(strm, "w")
         for entry in map(str, range(self.HUGE_ZIPFILE_NUM_ENTRIES)):
             zf.writestr(entry, entry)
-        zf.close()
         zf.mode = 'r'
-        yield zf
+        return zf
 
     def test_joinpath_constant_time(self):
         """
         Ensure joinpath on items in zipfile is linear time.
         """
-        for huge_zipfile in self.huge_zipfile():
-            root = zipp.Path(huge_zipfile)
-            n = 0
-            for entry in root.iterdir():
-                entry.joinpath('suffix')
-                n += 1
-            # Check the file iterated all items
-            assert n == self.HUGE_ZIPFILE_NUM_ENTRIES
+        root = zipp.Path(self.huge_zipfile())
+        entries = jaraco.itertools.Counter(root.iterdir())
+        for entry in entries:
+            entry.joinpath('suffix')
+        # Check the file iterated all items
+        assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
