@@ -8,8 +8,7 @@ import posixpath
 import zipfile
 import functools
 import itertools
-
-import more_itertools
+from collections import OrderedDict
 
 __metaclass__ = type
 
@@ -195,12 +194,15 @@ class Path:
 
     @staticmethod
     def _implied_dirs(names):
-        return more_itertools.unique_everseen(
-            parent + "/"
-            for name in names
-            for parent in _parents(name)
-            if parent + "/" not in names
+        parents = itertools.chain.from_iterable(map(_parents, names))
+        # Cast names to a set for O(1) lookups
+        name_set = set(names)
+        # Deduplicate entries in original order
+        implied_dirs = OrderedDict.fromkeys(
+            p + posixpath.sep for p in parents
+            if p + posixpath.sep not in name_set
         )
+        return iter(implied_dirs)
 
     @classmethod
     def _add_implied_dirs(cls, names):
