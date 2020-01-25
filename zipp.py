@@ -189,12 +189,11 @@ class Path:
     @staticmethod
     def _implied_dirs(names):
         parents = itertools.chain.from_iterable(map(_parents, names))
-        # Cast names to a set for O(1) lookups
-        name_set = set(names)
         # Deduplicate entries in original order
         implied_dirs = OrderedDict.fromkeys(
             p + posixpath.sep for p in parents
-            if p + posixpath.sep not in name_set
+            # Cast names to a set for O(1) lookups
+            if p + posixpath.sep not in set(names)
         )
         return iter(implied_dirs)
 
