@@ -196,3 +196,28 @@ class TestPath(unittest.TestCase):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
             assert (root / 'missing dir/').parent.at == ''
+
+    HUGE_ZIPFILE_NUM_ENTRIES = 50000
+
+    def huge_zipfile(self):
+        """Create an on-disk zipfile with a huge number of entries entries."""
+        tmpfile = pathlib.Path(self.fixtures.enter_context(temp_dir())) / 'huge.zip'
+        zf = zipfile.ZipFile(tmpfile, "w")
+        for x in range(0, self.HUGE_ZIPFILE_NUM_ENTRIES):
+            x_str = str(x)
+            zf.writestr(x_str, x_str.encode('ascii'))
+        zf.close()
+        yield str(tmpfile)
+
+    def test_joinpath_constant_time(self):
+        """
+        Ensure joinpath on items in zipfile is linear time.
+        """
+        for huge_zipfile in self.huge_zipfile():
+            root = zipp.Path(huge_zipfile)
+            n = 0
+            for entry in root.iterdir():
+                entry.joinpath('suffix')
+                n += 1
+            # Check the file iterated all items
+            assert n == self.HUGE_ZIPFILE_NUM_ENTRIES
