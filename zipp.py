@@ -60,6 +60,11 @@ def _ancestry(path):
 
 
 class CompleteDirs(zipfile.ZipFile):
+    """
+    A ZipFile subclass that ensures that implied directories
+    are always included in the namelist.
+    """
+
     @staticmethod
     def _implied_dirs(names):
         parents = itertools.chain.from_iterable(map(_parents, names))
@@ -78,7 +83,11 @@ class CompleteDirs(zipfile.ZipFile):
     def _name_set(self):
         return set(self.namelist())
 
-    def find(self, name):
+    def resolve_dir(self, name):
+        """
+        If the name represents a directory, return that name
+        as a directory (with the trailing slash).
+        """
         names = self._name_set()
         dirname = name + '/'
         dir_match = name not in names and dirname in names
@@ -106,7 +115,7 @@ class FastZip(CompleteDirs):
     def make(cls, source):
         """
         Given a source (filename or zipfile), return an
-        appropriate subclass.
+        appropriate CompleteDirs subclass.
         """
         if isinstance(source, CompleteDirs):
             return source
@@ -250,7 +259,7 @@ class Path:
 
     def joinpath(self, add):
         next = posixpath.join(self.at, _pathlib_compat(add))
-        return self._next(self.root.find(next))
+        return self._next(self.root.resolve_dir(next))
 
     __truediv__ = joinpath
 
