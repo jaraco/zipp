@@ -55,25 +55,7 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
-class FastZip(zipfile.ZipFile):
-    """
-    ZipFile subclass to ensure implicit
-    dirs exist and are resolved rapidly.
-    """
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.__setup_caches()
-
-    def __setup_caches(self):
-        self.__names = super().namelist()
-        self.__names += self._implied_dirs(self.__names)
-        self.__lookup = set(self.__names)
-
-    def find(self, name):
-        if name not in self.__lookup and name + '/' in self.__lookup:
-            return name + '/'
-        return name
-
+class CompleteDirs(zipfile.ZipFile):
     @staticmethod
     def _implied_dirs(names):
         parents = itertools.chain.from_iterable(map(_parents, names))
@@ -86,7 +68,37 @@ class FastZip(zipfile.ZipFile):
         return implied_dirs
 
     def namelist(self):
+        names = super().namelist()
+        return names + list(self._implied_dirs(names))
+
+    def _name_set(self):
+        return set(self.namelist())
+
+    def find(self, name):
+        names = self._name_set()
+        if name not in names and name + '/' in names:
+            return name + '/'
+        return name
+
+
+class FastZip(CompleteDirs):
+    """
+    ZipFile subclass to ensure implicit
+    dirs exist and are resolved rapidly.
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__setup_caches()
+
+    def __setup_caches(self):
+        self.__names = super().namelist()
+        self.__lookup = super()._name_set()
+
+    def namelist(self):
         return self.__names
+
+    def _name_set(self):
+        return self.__lookup
 
     @classmethod
     def make(cls, source):
