@@ -1,7 +1,10 @@
 .. image:: https://img.shields.io/pypi/v/zipp.svg
-   :target: https://pypi.org/project/zipp
+   :target: `PyPI link`_
 
 .. image:: https://img.shields.io/pypi/pyversions/zipp.svg
+   :target: `PyPI link`_
+
+.. _PyPI link: https://pypi.org/project/zipp
 
 .. image:: https://dev.azure.com/jaraco/zipp/_apis/build/status/jaraco.zipp?branchName=master
    :target: https://dev.azure.com/jaraco/zipp/_build/latest?definitionId=1&branchName=master
