@@ -6,6 +6,8 @@ import unittest
 
 from test.support import temp_dir
 
+
+# Poor man's technique to consume a (smallish) iterable.
 consume = tuple
 
 

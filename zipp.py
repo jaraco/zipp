@@ -6,6 +6,10 @@ import contextlib
 from collections import OrderedDict
 
 
+class ZipFile:
+    pass
+
+
 def _parents(path):
     """
     Given a path with elements separated by
@@ -23,10 +27,6 @@ def _parents(path):
     []
     """
     return itertools.islice(_ancestry(path), 1, None)
-
-
-class ZipFile:
-    pass
 
 
 def _ancestry(path):
