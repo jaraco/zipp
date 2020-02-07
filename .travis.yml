@@ -2,13 +2,13 @@ dist: xenial
 language: python
 
 python:
-- 3.6
+- 3.5
 - &latest_py3 3.8
 
 cache: pip
 
 install:
-- pip install tox tox-venv
+- pip install tox tox-venv wheel
 
 before_script:
   # Disable IPv6. Ref travis-ci/travis-ci#8361
