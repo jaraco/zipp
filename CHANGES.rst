@@ -1,3 +1,9 @@
+v2.2.0
+======
+
+#36: Rebuild package with minimum Python version declared both
+in package metadata and in the python tag.
+
 v2.1.0
 ======
 
