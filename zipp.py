@@ -1,6 +1,5 @@
 import io
 import posixpath
-import functools
 import itertools
 import contextlib
 from collections import OrderedDict
@@ -51,6 +50,18 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
+_dedupe = OrderedDict.fromkeys
+"""Deduplicate an iterable in original order"""
+
+
+def _difference(minuend, subtrahend):
+    """
+    Return items in minuend not in subtrahend, retaining order
+    with O(1) lookup.
+    """
+    return itertools.filterfalse(set(subtrahend).__contains__, minuend)
+
+
 class CompleteDirs(ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
@@ -60,13 +71,8 @@ class CompleteDirs(ZipFile):
     @staticmethod
     def _implied_dirs(names):
         parents = itertools.chain.from_iterable(map(_parents, names))
-        # Deduplicate entries in original order
-        implied_dirs = OrderedDict.fromkeys(
-            p + posixpath.sep for p in parents
-            # Cast names to a set for O(1) lookups
-            if p + posixpath.sep not in set(names)
-        )
-        return implied_dirs
+        as_dirs = (p + posixpath.sep for p in parents)
+        return _dedupe(_difference(as_dirs, names))
 
     def namelist(self):
         names = super(CompleteDirs, self).namelist()
@@ -195,20 +201,31 @@ class Path:
         self.root = FastLookup.make(root)
         self.at = at
 
-    @property
-    def open(self):
-        return functools.partial(self.root.open, self.at)
+    def open(self, mode='r', *args, **kwargs):
+        """
+        Open this entry as text or binary following the semantics
+        of ``pathlib.Path.open()`` by passing arguments through
+        to io.TextIOWrapper().
+        """
+        pwd = kwargs.pop('pwd', None)
+        zip_mode = mode[0]
+        stream = self.root.open(self.at, zip_mode, pwd=pwd)
+        if 'b' in mode:
+            if args or kwargs:
+                raise ValueError("encoding args invalid for binary operation")
+            return stream
+        return io.TextIOWrapper(stream, *args, **kwargs)
 
     @property
     def name(self):
         return posixpath.basename(self.at.rstrip("/"))
 
     def read_text(self, *args, **kwargs):
-        with self.open() as strm:
-            return io.TextIOWrapper(strm, *args, **kwargs).read()
+        with self.open('r', *args, **kwargs) as strm:
+            return strm.read()
 
     def read_bytes(self):
-        with self.open() as strm:
+        with self.open('rb') as strm:
             return strm.read()
 
     def _is_child(self, path):
