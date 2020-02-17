@@ -1,3 +1,15 @@
+v1.2.0
+======
+
+#44: ``zipp.Path.open()`` now supports a compatible signature
+as ``pathlib.Path.open()``, accepting text (default) or binary
+modes and soliciting keyword parameters passed through to
+``io.TextIOWrapper`` (encoding, newline, etc). The stream is
+opened in text-mode by default now. ``open`` no
+longer accepts ``pwd`` as a positional argument and does not
+accept the ``force_zip64`` parameter at all. This change is
+a backward-incompatible change for that single function.
+
 v1.1.1
 ======
 
