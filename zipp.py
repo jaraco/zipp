@@ -48,6 +48,18 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
+_dedupe = OrderedDict.fromkeys
+"""Deduplicate an iterable in original order"""
+
+
+def _difference(minuend, subtrahend):
+    """
+    Return items in minuend not in subtrahend, retaining order
+    with O(1) lookup.
+    """
+    return itertools.filterfalse(set(subtrahend).__contains__, minuend)
+
+
 class CompleteDirs(zipfile.ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
@@ -57,14 +69,8 @@ class CompleteDirs(zipfile.ZipFile):
     @staticmethod
     def _implied_dirs(names):
         parents = itertools.chain.from_iterable(map(_parents, names))
-        # Cast names to a set for O(1) lookups
-        existing = set(names)
-        # Deduplicate entries in original order
-        implied_dirs = OrderedDict.fromkeys(
-            p + posixpath.sep for p in parents
-            if p + posixpath.sep not in existing
-        )
-        return implied_dirs
+        as_dirs = (p + posixpath.sep for p in parents)
+        return _dedupe(_difference(as_dirs, names))
 
     def namelist(self):
         names = super(CompleteDirs, self).namelist()
