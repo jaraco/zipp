@@ -1,7 +1,6 @@
 import io
 import posixpath
 import zipfile
-import functools
 import itertools
 import contextlib
 from collections import OrderedDict
