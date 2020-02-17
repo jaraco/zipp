@@ -68,11 +68,12 @@ class CompleteDirs(zipfile.ZipFile):
     @staticmethod
     def _implied_dirs(names):
         parents = itertools.chain.from_iterable(map(_parents, names))
+        # Cast names to a set for O(1) lookups
+        existing = set(names)
         # Deduplicate entries in original order
         implied_dirs = OrderedDict.fromkeys(
             p + posixpath.sep for p in parents
-            # Cast names to a set for O(1) lookups
-            if p + posixpath.sep not in set(names)
+            if p + posixpath.sep not in existing
         )
         return implied_dirs
 
