@@ -5,8 +5,10 @@ import pathlib
 import unittest
 import tempfile
 import shutil
+import string
 
 import jaraco.itertools
+import func_timeout
 
 import zipp
 
@@ -225,3 +227,8 @@ class TestPath(unittest.TestCase):
             entry.joinpath('suffix')
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
+
+    @func_timeout.func_set_timeout(3)
+    def test_implied_dirs_performance(self):
+        data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
+        zipp.CompleteDirs._implied_dirs(data)
