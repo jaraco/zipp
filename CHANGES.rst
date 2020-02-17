@@ -1,3 +1,8 @@
+v1.1.1
+======
+
+#43: Restored performance of implicit dir computation.
+
 v1.1.0
 ======
 
