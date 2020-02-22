@@ -2,7 +2,6 @@ import io
 import posixpath
 import itertools
 import contextlib
-from collections import OrderedDict
 
 
 class ZipFile:
@@ -50,7 +49,7 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
-_dedupe = OrderedDict.fromkeys
+_dedupe = dict.fromkeys
 """Deduplicate an iterable in original order"""
 
 
@@ -201,13 +200,12 @@ class Path:
         self.root = FastLookup.make(root)
         self.at = at
 
-    def open(self, mode='r', *args, **kwargs):
+    def open(self, mode='r', *args, pwd=None, **kwargs):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
-        pwd = kwargs.pop('pwd', None)
         zip_mode = mode[0]
         stream = self.root.open(self.at, zip_mode, pwd=pwd)
         if 'b' in mode:
