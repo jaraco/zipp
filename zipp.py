@@ -3,7 +3,12 @@ import posixpath
 import zipfile
 import itertools
 import contextlib
-from collections import OrderedDict
+import sys
+
+if sys.version_info < (3, 7):
+    from collections import OrderedDict
+else:
+    OrderedDict = dict
 
 
 def _parents(path):
