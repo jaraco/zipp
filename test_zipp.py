@@ -123,6 +123,17 @@ class TestPath(unittest.TestCase):
                 data = strm.read()
             assert data == "content of a"
 
+    def test_open_write(self):
+        """
+        If the zipfile is open for write, it should be possible to
+        write bytes or text to it.
+        """
+        zf = zipp.Path(zipfile.ZipFile(io.BytesIO(), mode='w'))
+        with zf.joinpath('file.bin').open('wb') as strm:
+            strm.write(b'binary contents')
+        with zf.joinpath('file.txt').open('w') as strm:
+            strm.write('text file')
+
     def test_read(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
