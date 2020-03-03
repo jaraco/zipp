@@ -1,3 +1,9 @@
+v3.1.0
+======
+
+#47: ``.open`` now raises ``FileNotFoundError`` and
+``IsADirectoryError`` when appropriate.
+
 v3.0.0
 ======
 
