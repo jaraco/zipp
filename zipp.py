@@ -220,7 +220,11 @@ class Path:
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
+        if self.is_dir():
+            raise IsADirectoryError(self)
         zip_mode = mode[0]
+        if not self.exists() and zip_mode == 'r':
+            raise FileNotFoundError(self)
         stream = self.root.open(self.at, zip_mode, pwd=pwd)
         if 'b' in mode:
             if args or kwargs:
