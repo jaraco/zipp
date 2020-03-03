@@ -134,6 +134,22 @@ class TestPath(unittest.TestCase):
         with zf.joinpath('file.txt').open('w') as strm:
             strm.write('text file')
 
+    def test_open_extant_directory(self):
+        """
+        Attempting to open a directory raises IsADirectoryError.
+        """
+        zf = zipp.Path(add_dirs(build_alpharep_fixture()))
+        with self.assertRaises(IsADirectoryError):
+            zf.joinpath('b').open()
+
+    def test_open_missing_directory(self):
+        """
+        Attempting to open a missing directory raises FileNotFoundError.
+        """
+        zf = zipp.Path(add_dirs(build_alpharep_fixture()))
+        with self.assertRaises(FileNotFoundError):
+            zf.joinpath('z').open()
+
     def test_read(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
