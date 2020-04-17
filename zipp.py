@@ -150,11 +150,11 @@ class Path:
     Consider a zip file with this structure::
 
         .
-        ├── a.txt
-        └── b
-            ├── c.txt
-            └── d
-                └── e.txt
+        |__ a.txt
+        |__ b
+            |__ c.txt
+            |__ d
+                |__ e.txt
 
     >>> data = io.BytesIO()
     >>> zf = zipfile.ZipFile(data, 'w')
