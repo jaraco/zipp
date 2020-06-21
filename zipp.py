@@ -64,6 +64,10 @@ def _difference(minuend, subtrahend):
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
 
+def _strip_prefix(name):
+    return name.lstrip('/')
+
+
 class CompleteDirs(zipfile.ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
@@ -77,7 +81,8 @@ class CompleteDirs(zipfile.ZipFile):
         return _dedupe(_difference(as_dirs, names))
 
     def namelist(self):
-        names = super(CompleteDirs, self).namelist()
+        raw = super(CompleteDirs, self).namelist()
+        names = list(map(_strip_prefix, raw))
         return names + list(self._implied_dirs(names))
 
     def _name_set(self):
