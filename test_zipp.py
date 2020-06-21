@@ -25,7 +25,7 @@ def add_dirs(zf):
     return zf
 
 
-def build_alpharep_fixture():
+def build_alpharep_fixture(prefix=''):
     """
     Create a zip file with this structure:
 
@@ -52,11 +52,11 @@ def build_alpharep_fixture():
     """
     data = io.BytesIO()
     zf = zipfile.ZipFile(data, "w")
-    zf.writestr("a.txt", b"content of a")
-    zf.writestr("b/c.txt", b"content of c")
-    zf.writestr("b/d/e.txt", b"content of e")
-    zf.writestr("b/f.txt", b"content of f")
-    zf.writestr("g/h/i.txt", b"content of i")
+    zf.writestr(f"{prefix}a.txt", b"content of a")
+    zf.writestr(f"{prefix}b/c.txt", b"content of c")
+    zf.writestr(f"{prefix}b/d/e.txt", b"content of e")
+    zf.writestr(f"{prefix}b/f.txt", b"content of f")
+    zf.writestr(f"{prefix}g/h/i.txt", b"content of i")
     zf.filename = "alpharep.zip"
     return zf
 
@@ -80,6 +80,8 @@ class TestPath(unittest.TestCase):
             yield build_alpharep_fixture()
         with self.subTest():
             yield add_dirs(build_alpharep_fixture())
+        with self.subTest():
+            yield build_alpharep_fixture(prefix='/')
 
     def zipfile_ondisk(self):
         tmpdir = pathlib.Path(self.fixtures.enter_context(temp_dir()))
