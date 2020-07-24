@@ -105,7 +105,7 @@ class CompleteDirs(zipfile.ZipFile):
         if not isinstance(source, zipfile.ZipFile):
             return cls(_pathlib_compat(source))
 
-        # Only allow for FastPath when supplied zipfile is read-only
+        # Only allow for FastLookup when supplied zipfile is read-only
         if 'r' not in source.mode:
             cls = CompleteDirs
 
