@@ -111,6 +111,7 @@ class CompleteDirs(zipfile.ZipFile):
 
         res = cls.__new__(cls)
         vars(res).update(vars(source))
+        res.close = lambda: None
         return res
 
 
