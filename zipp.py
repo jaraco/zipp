@@ -109,9 +109,8 @@ class CompleteDirs(zipfile.ZipFile):
         if 'r' not in source.mode:
             cls = CompleteDirs
 
-        res = cls.__new__(cls)
-        vars(res).update(vars(source))
-        return res
+        source.__class__ = cls
+        return source
 
 
 class FastLookup(CompleteDirs):
