@@ -64,11 +64,17 @@ def _difference(minuend, subtrahend):
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
 
-class CompleteDirs(zipfile.ZipFile):
+class CompleteDirs:
     """
-    A ZipFile subclass that ensures that implied directories
+    A ZipFile adapter that ensures that implied directories
     are always included in the namelist.
     """
+
+    def __init__(self, orig):
+        self._orig = orig
+
+    def __getattr__(self, *args, **kwargs):
+        return getattr(self._orig, *args, **kwargs)
 
     @staticmethod
     def _implied_dirs(names):
@@ -77,7 +83,7 @@ class CompleteDirs(zipfile.ZipFile):
         return _dedupe(_difference(as_dirs, names))
 
     def namelist(self):
-        names = super(CompleteDirs, self).namelist()
+        names = self._orig.namelist()
         return names + list(self._implied_dirs(names))
 
     def _name_set(self):
@@ -103,15 +109,13 @@ class CompleteDirs(zipfile.ZipFile):
             return source
 
         if not isinstance(source, zipfile.ZipFile):
-            return cls(_pathlib_compat(source))
+            source = zipfile.ZipFile(_pathlib_compat(source))
 
         # Only allow for FastLookup when supplied zipfile is read-only
         if 'r' not in source.mode:
             cls = CompleteDirs
 
-        res = cls.__new__(cls)
-        vars(res).update(vars(source))
-        return res
+        return cls(source)
 
 
 class FastLookup(CompleteDirs):
