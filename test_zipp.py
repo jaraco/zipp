@@ -6,6 +6,7 @@ import unittest
 import tempfile
 import shutil
 import string
+import functools
 
 import jaraco.itertools
 import func_timeout
@@ -70,6 +71,20 @@ def temp_dir():
         shutil.rmtree(tmpdir)
 
 
+def pass_alpharep(meth):
+    """
+    Given a method, wrap it in a for loop that invokes method
+    with each subtest.
+    """
+
+    @functools.wraps(meth)
+    def wrapper(self):
+        for alpharep in self.zipfile_alpharep():
+            meth(self, alpharep=alpharep)
+
+    return wrapper
+
+
 class TestPath(unittest.TestCase):
     def setUp(self):
         self.fixtures = contextlib.ExitStack()
@@ -81,18 +96,19 @@ class TestPath(unittest.TestCase):
         with self.subTest():
             yield add_dirs(build_alpharep_fixture())
 
-    def zipfile_ondisk(self):
+    def zipfile_ondisk(self, alpharep):
         tmpdir = pathlib.Path(self.fixtures.enter_context(temp_dir()))
-        for alpharep in self.zipfile_alpharep():
+        if True:
             buffer = alpharep.fp
             alpharep.close()
             path = tmpdir / alpharep.filename
             with path.open("wb") as strm:
                 strm.write(buffer.getvalue())
-            yield path
+            return path
 
-    def test_iterdir_and_types(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_iterdir_and_types(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             assert root.is_dir()
             a, b, g = root.iterdir()
@@ -107,28 +123,32 @@ class TestPath(unittest.TestCase):
             (i,) = h.iterdir()
             assert i.is_file()
 
-    def test_is_file_missing(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_is_file_missing(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             assert not root.joinpath('missing.txt').is_file()
 
-    def test_iterdir_on_file(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_iterdir_on_file(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             a, b, g = root.iterdir()
             with self.assertRaises(ValueError):
                 a.iterdir()
 
-    def test_subdir_is_dir(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_subdir_is_dir(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             assert (root / 'b').is_dir()
             assert (root / 'b/').is_dir()
             assert (root / 'g').is_dir()
             assert (root / 'g/').is_dir()
 
-    def test_open(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_open(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             a, b, g = root.iterdir()
             with a.open() as strm:
@@ -154,8 +174,9 @@ class TestPath(unittest.TestCase):
         with self.assertRaises(IsADirectoryError):
             zf.joinpath('b').open()
 
-    def test_open_binary_invalid_args(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_open_binary_invalid_args(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             with self.assertRaises(ValueError):
                 root.joinpath('a.txt').open('rb', encoding='utf-8')
@@ -170,34 +191,38 @@ class TestPath(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             zf.joinpath('z').open()
 
-    def test_read(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_read(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             a, b, g = root.iterdir()
             assert a.read_text() == "content of a"
             assert a.read_bytes() == b"content of a"
 
-    def test_joinpath(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_joinpath(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             a = root.joinpath("a.txt")
             assert a.is_file()
             e = root.joinpath("b").joinpath("d").joinpath("e.txt")
             assert e.read_text() == "content of e"
 
-    def test_traverse_truediv(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_traverse_truediv(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             a = root / "a.txt"
             assert a.is_file()
             e = root / "b" / "d" / "e.txt"
             assert e.read_text() == "content of e"
 
-    def test_traverse_simplediv(self):
+    @pass_alpharep
+    def test_traverse_simplediv(self, alpharep):
         """
         Disable the __future__.division when testing traversal.
         """
-        for alpharep in self.zipfile_alpharep():
+        if True:
             code = compile(
                 source="zipp.Path(alpharep) / 'a'",
                 filename="(test)",
@@ -206,42 +231,49 @@ class TestPath(unittest.TestCase):
             )
             eval(code)
 
-    def test_pathlike_construction(self):
+    @pass_alpharep
+    def test_pathlike_construction(self, alpharep):
         """
         zipp.Path should be constructable from a path-like object
         """
-        for zipfile_ondisk in self.zipfile_ondisk():
+        zipfile_ondisk = self.zipfile_ondisk(alpharep)
+        if True:
             pathlike = pathlib.Path(str(zipfile_ondisk))
             zipp.Path(pathlike)
 
-    def test_traverse_pathlike(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_traverse_pathlike(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             root / pathlib.Path("a")
 
-    def test_parent(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_parent(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             assert (root / 'a').parent.at == ''
             assert (root / 'a' / 'b').parent.at == 'a/'
 
-    def test_dir_parent(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_dir_parent(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             assert (root / 'b').parent.at == ''
             assert (root / 'b/').parent.at == ''
 
-    def test_missing_dir_parent(self):
-        for alpharep in self.zipfile_alpharep():
+    @pass_alpharep
+    def test_missing_dir_parent(self, alpharep):
+        if True:
             root = zipp.Path(alpharep)
             assert (root / 'missing dir/').parent.at == ''
 
-    def test_mutability(self):
+    @pass_alpharep
+    def test_mutability(self, alpharep):
         """
         If the underlying zipfile is changed, the Path object should
         reflect that change.
         """
-        for alpharep in self.zipfile_alpharep():
+        if True:
             root = zipp.Path(alpharep)
             a, b, g = root.iterdir()
             alpharep.writestr('foo.txt', 'foo')
@@ -278,16 +310,19 @@ class TestPath(unittest.TestCase):
         data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
         zipp.CompleteDirs._implied_dirs(data)
 
-    def test_read_does_not_close(self):
-        for alpharep in self.zipfile_ondisk():
+    @pass_alpharep
+    def test_read_does_not_close(self, alpharep):
+        alpharep = self.zipfile_ondisk(alpharep)
+        if True:
             with zipfile.ZipFile(alpharep) as file:
                 for rep in range(2):
                     zipp.Path(file, 'a.txt').read_text()
 
-    def test_subclass(self):
+    @pass_alpharep
+    def test_subclass(self, alpharep):
         class Subclass(zipp.Path):
             pass
 
-        for alpharep in self.zipfile_alpharep():
+        if True:
             root = Subclass(alpharep)
             assert isinstance(root / 'b', Subclass)
