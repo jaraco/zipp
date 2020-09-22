@@ -107,6 +107,11 @@ class TestPath(unittest.TestCase):
             (i,) = h.iterdir()
             assert i.is_file()
 
+    def test_is_file_missing(self):
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            assert not root.joinpath('missing.txt').is_file()
+
     def test_iterdir_on_file(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
