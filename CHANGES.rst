@@ -1,3 +1,11 @@
+v3.2.0
+======
+
+#57 and bpo-40564: Mutate the passed ZipFile object
+type instead of making a copy. Prevents issues when
+both the local copy and the caller's copy attempt to
+close the same file handle.
+
 v3.1.0
 ======
 
