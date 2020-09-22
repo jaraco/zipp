@@ -107,6 +107,11 @@ class TestPath(unittest.TestCase):
             (i,) = h.iterdir()
             assert i.is_file()
 
+    def test_is_file_missing(self):
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            assert not root.joinpath('missing.txt').is_file()
+
     def test_iterdir_on_file(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
@@ -175,7 +180,7 @@ class TestPath(unittest.TestCase):
     def test_joinpath(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
-            a = root.joinpath("a")
+            a = root.joinpath("a.txt")
             assert a.is_file()
             e = root.joinpath("b").joinpath("d").joinpath("e.txt")
             assert e.read_text() == "content of e"
@@ -183,7 +188,7 @@ class TestPath(unittest.TestCase):
     def test_traverse_truediv(self):
         for alpharep in self.zipfile_alpharep():
             root = zipp.Path(alpharep)
-            a = root / "a"
+            a = root / "a.txt"
             assert a.is_file()
             e = root / "b" / "d" / "e.txt"
             assert e.read_text() == "content of e"
