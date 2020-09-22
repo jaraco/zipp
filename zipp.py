@@ -64,9 +64,9 @@ def _difference(minuend, subtrahend):
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
 
-class CompleteDirs(zipfile.ZipFile):
+class CompleteDirs:
     """
-    A ZipFile subclass that ensures that implied directories
+    A mix-in for a ZipFile that ensures that implied directories
     are always included in the namelist.
     """
 
@@ -103,15 +103,17 @@ class CompleteDirs(zipfile.ZipFile):
             return source
 
         if not isinstance(source, zipfile.ZipFile):
-            return cls(_pathlib_compat(source))
+            source = zipfile.ZipFile(_pathlib_compat(source))
 
         # Only allow for FastLookup when supplied zipfile is read-only
         if 'r' not in source.mode:
             cls = CompleteDirs
 
-        res = cls.__new__(cls)
-        vars(res).update(vars(source))
-        return res
+        mixed = type(
+            '{source.__class__.__name__}{cls.__name__}',
+            (cls, source.__class__), {})
+        source.__class__ = mixed
+        return source
 
 
 class FastLookup(CompleteDirs):
