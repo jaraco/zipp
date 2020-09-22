@@ -278,3 +278,11 @@ class TestPath(unittest.TestCase):
             with zipfile.ZipFile(alpharep) as file:
                 for rep in range(2):
                     zipp.Path(file, 'a.txt').read_text()
+
+    def test_subclass(self):
+        class Subclass(zipp.Path):
+            pass
+
+        for alpharep in self.zipfile_alpharep():
+            root = Subclass(alpharep)
+            assert isinstance(root / 'b', Subclass)
