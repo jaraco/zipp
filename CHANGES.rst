@@ -6,6 +6,9 @@ type instead of making a copy. Prevents issues when
 both the local copy and the caller's copy attempt to
 close the same file handle.
 
+#56 and bpo-41035: ``Path._next`` now honors
+subclasses.
+
 v3.1.0
 ======
 

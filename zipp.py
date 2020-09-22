@@ -257,7 +257,7 @@ class Path:
         return posixpath.dirname(path.at.rstrip("/")) == self.at.rstrip("/")
 
     def _next(self, at):
-        return Path(self.root, at)
+        return self.__class__(self.root, at)
 
     def is_dir(self):
         return not self.at or self.at.endswith("/")
