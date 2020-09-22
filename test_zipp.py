@@ -101,10 +101,10 @@ class TestPath(unittest.TestCase):
             assert g.is_dir()
             c, f, d = b.iterdir()
             assert c.is_file() and f.is_file()
-            e, = d.iterdir()
+            (e,) = d.iterdir()
             assert e.is_file()
-            h, = g.iterdir()
-            i, = h.iterdir()
+            (h,) = g.iterdir()
+            (i,) = h.iterdir()
             assert i.is_file()
 
     def test_subdir_is_dir(self):
@@ -226,11 +226,9 @@ class TestPath(unittest.TestCase):
             a, b, g = root.iterdir()
             alpharep.writestr('foo.txt', 'foo')
             alpharep.writestr('bar/baz.txt', 'baz')
-            assert any(
-                child.name == 'foo.txt'
-                for child in root.iterdir())
+            assert any(child.name == 'foo.txt' for child in root.iterdir())
             assert (root / 'foo.txt').read_text() == 'foo'
-            baz, = (root / 'bar').iterdir()
+            (baz,) = (root / 'bar').iterdir()
             assert baz.read_text() == 'baz'
 
     HUGE_ZIPFILE_NUM_ENTRIES = 2 ** 13

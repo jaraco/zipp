@@ -118,6 +118,7 @@ class FastLookup(CompleteDirs):
     ZipFile subclass to ensure implicit
     dirs exist and are resolved rapidly.
     """
+
     def namelist(self):
         with contextlib.suppress(AttributeError):
             return self.__names
