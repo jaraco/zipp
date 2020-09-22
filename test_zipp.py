@@ -149,6 +149,14 @@ class TestPath(unittest.TestCase):
         with self.assertRaises(IsADirectoryError):
             zf.joinpath('b').open()
 
+    def test_open_binary_invalid_args(self):
+        for alpharep in self.zipfile_alpharep():
+            root = zipp.Path(alpharep)
+            with self.assertRaises(ValueError):
+                root.joinpath('a.txt').open('rb', encoding='utf-8')
+            with self.assertRaises(ValueError):
+                root.joinpath('a.txt').open('rb', 'utf-8')
+
     def test_open_missing_directory(self):
         """
         Attempting to open a missing directory raises FileNotFoundError.
