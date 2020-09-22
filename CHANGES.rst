@@ -9,6 +9,8 @@ close the same file handle.
 #56 and bpo-41035: ``Path._next`` now honors
 subclasses.
 
+#55: ``Path.is_file()`` now returns False for non-existent names.
+
 v3.1.0
 ======
 
