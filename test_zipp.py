@@ -259,3 +259,9 @@ class TestPath(unittest.TestCase):
     def test_implied_dirs_performance(self):
         data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
         zipp.CompleteDirs._implied_dirs(data)
+
+    def test_read_does_not_close(self):
+        for alpharep in self.zipfile_ondisk():
+            with zipfile.ZipFile(alpharep) as file:
+                for rep in range(2):
+                    zipp.Path(file, 'a.txt').read_text()
