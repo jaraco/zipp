@@ -205,7 +205,8 @@ class Path:
 
     Coercion to string:
 
-    >>> str(c)
+    >>> import os
+    >>> str(c).replace(os.sep, posixpath.sep)
     'mem/abcde.zip/b/c.txt'
 
     At the root, ``name``, ``filename``, and ``parent``
@@ -215,7 +216,7 @@ class Path:
 
     >>> root.name
     'abcde.zip'
-    >>> str(root.filename)
+    >>> str(root.filename).replace(os.sep, posixpath.sep)
     'mem/abcde.zip'
     >>> str(root.parent)
     'mem'
