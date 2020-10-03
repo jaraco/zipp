@@ -1,3 +1,10 @@
+v3.3.0
+======
+
+#9: ``Path`` objects now expose a ``.filename`` attribute
+and rely on that to resolve ``.name`` and ``.parent`` when
+the ``Path`` object is at the root of the zipfile.
+
 v3.2.0
 ======
 

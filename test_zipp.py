@@ -307,3 +307,41 @@ class TestPath(unittest.TestCase):
 
         root = Subclass(alpharep)
         assert isinstance(root / 'b', Subclass)
+
+    @pass_alpharep
+    def test_filename(self, alpharep):
+        root = zipp.Path(alpharep)
+        assert root.filename == pathlib.Path('alpharep.zip')
+
+    @pass_alpharep
+    def test_root_name(self, alpharep):
+        """
+        The name of the root should be the name of the zipfile
+        """
+        root = zipp.Path(alpharep)
+        assert root.name == 'alpharep.zip' == root.filename.name
+
+    @pass_alpharep
+    def test_root_parent(self, alpharep):
+        root = zipp.Path(alpharep)
+        assert root.parent == pathlib.Path('.')
+        root.root.filename = 'foo/bar.zip'
+        assert root.parent == pathlib.Path('foo')
+
+    @pass_alpharep
+    def test_root_unnamed(self, alpharep):
+        """
+        It is an error to attempt to get the name
+        or parent of an unnamed zipfile.
+        """
+        alpharep.filename = None
+        root = zipp.Path(alpharep)
+        with self.assertRaises(TypeError):
+            root.name
+        with self.assertRaises(TypeError):
+            root.parent
+
+        # .name and .parent should still work on subs
+        sub = root / "b"
+        assert sub.name == "b"
+        assert sub.parent
