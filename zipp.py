@@ -1,21 +1,147 @@
-# coding: utf-8
-
-from __future__ import division
-
 import io
-import os
-import sys
 import posixpath
 import zipfile
-import functools
+import itertools
+import contextlib
+import sys
+import pathlib
 
-try:
-    import pathlib
-except ImportError:
-    import pathlib2 as pathlib
+if sys.version_info < (3, 7):
+    from collections import OrderedDict
+else:
+    OrderedDict = dict
 
 
-__metaclass__ = type
+def _parents(path):
+    """
+    Given a path with elements separated by
+    posixpath.sep, generate all parents of that path.
+
+    >>> list(_parents('b/d'))
+    ['b']
+    >>> list(_parents('/b/d/'))
+    ['/b']
+    >>> list(_parents('b/d/f/'))
+    ['b/d', 'b']
+    >>> list(_parents('b'))
+    []
+    >>> list(_parents(''))
+    []
+    """
+    return itertools.islice(_ancestry(path), 1, None)
+
+
+def _ancestry(path):
+    """
+    Given a path with elements separated by
+    posixpath.sep, generate all elements of that path
+
+    >>> list(_ancestry('b/d'))
+    ['b/d', 'b']
+    >>> list(_ancestry('/b/d/'))
+    ['/b/d', '/b']
+    >>> list(_ancestry('b/d/f/'))
+    ['b/d/f', 'b/d', 'b']
+    >>> list(_ancestry('b'))
+    ['b']
+    >>> list(_ancestry(''))
+    []
+    """
+    path = path.rstrip(posixpath.sep)
+    while path and path != posixpath.sep:
+        yield path
+        path, tail = posixpath.split(path)
+
+
+_dedupe = OrderedDict.fromkeys
+"""Deduplicate an iterable in original order"""
+
+
+def _difference(minuend, subtrahend):
+    """
+    Return items in minuend not in subtrahend, retaining order
+    with O(1) lookup.
+    """
+    return itertools.filterfalse(set(subtrahend).__contains__, minuend)
+
+
+class CompleteDirs(zipfile.ZipFile):
+    """
+    A ZipFile subclass that ensures that implied directories
+    are always included in the namelist.
+    """
+
+    @staticmethod
+    def _implied_dirs(names):
+        parents = itertools.chain.from_iterable(map(_parents, names))
+        as_dirs = (p + posixpath.sep for p in parents)
+        return _dedupe(_difference(as_dirs, names))
+
+    def namelist(self):
+        names = super(CompleteDirs, self).namelist()
+        return names + list(self._implied_dirs(names))
+
+    def _name_set(self):
+        return set(self.namelist())
+
+    def resolve_dir(self, name):
+        """
+        If the name represents a directory, return that name
+        as a directory (with the trailing slash).
+        """
+        names = self._name_set()
+        dirname = name + '/'
+        dir_match = name not in names and dirname in names
+        return dirname if dir_match else name
+
+    @classmethod
+    def make(cls, source):
+        """
+        Given a source (filename or zipfile), return an
+        appropriate CompleteDirs subclass.
+        """
+        if isinstance(source, CompleteDirs):
+            return source
+
+        if not isinstance(source, zipfile.ZipFile):
+            return cls(_pathlib_compat(source))
+
+        # Only allow for FastLookup when supplied zipfile is read-only
+        if 'r' not in source.mode:
+            cls = CompleteDirs
+
+        source.__class__ = cls
+        return source
+
+
+class FastLookup(CompleteDirs):
+    """
+    ZipFile subclass to ensure implicit
+    dirs exist and are resolved rapidly.
+    """
+
+    def namelist(self):
+        with contextlib.suppress(AttributeError):
+            return self.__names
+        self.__names = super(FastLookup, self).namelist()
+        return self.__names
+
+    def _name_set(self):
+        with contextlib.suppress(AttributeError):
+            return self.__lookup
+        self.__lookup = super(FastLookup, self)._name_set()
+        return self.__lookup
+
+
+def _pathlib_compat(path):
+    """
+    For path-like objects, convert to a filename for compatibility
+    on Python 3.6.1 and earlier.
+    """
+    try:
+        return path.__fspath__()
+    except AttributeError:
+        return str(path)
 
 
 class Path:
@@ -77,7 +203,7 @@ class Path:
     >>> (b / 'missing.txt').exists()
     False
 
-    Coersion to string:
+    Coercion to string:
 
     >>> str(c)
     'abcde.zip/b/c.txt'
@@ -86,27 +212,35 @@ class Path:
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
 
     def __init__(self, root, at=""):
-        self.root = (
-            root
-            if isinstance(root, zipfile.ZipFile)
-            else zipfile.ZipFile(self._pathlib_compat(root))
-        )
+        """
+        Construct a Path from a ZipFile or filename.
+
+        Note: When the source is an existing ZipFile object,
+        its type (__class__) will be mutated to a
+        specialized type. If the caller wishes to retain the
+        original type, the caller should either create a
+        separate ZipFile object or pass a filename.
+        """
+        self.root = FastLookup.make(root)
         self.at = at
 
-    @staticmethod
-    def _pathlib_compat(path):
+    def open(self, mode='r', *args, pwd=None, **kwargs):
         """
-        For path-like objects, convert to a filename for compatibility
-        on Python 3.6.1 and earlier.
+        Open this entry as text or binary following the semantics
+        of ``pathlib.Path.open()`` by passing arguments through
+        to io.TextIOWrapper().
         """
-        try:
-            return path.__fspath__()
-        except AttributeError:
-            return str(path)
-
-    @property
-    def open(self):
-        return functools.partial(self.root.open, self.at)
+        if self.is_dir():
+            raise IsADirectoryError(self)
+        zip_mode = mode[0]
+        if not self.exists() and zip_mode == 'r':
+            raise FileNotFoundError(self)
+        stream = self.root.open(self.at, zip_mode, pwd=pwd)
+        if 'b' in mode:
+            if args or kwargs:
+                raise ValueError("encoding args invalid for binary operation")
+            return stream
+        return io.TextIOWrapper(stream, *args, **kwargs)
 
     @property
     def name(self):
@@ -117,32 +251,32 @@ class Path:
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
     def read_text(self, *args, **kwargs):
-        with self.open() as strm:
-            return io.TextIOWrapper(strm, *args, **kwargs).read()
+        with self.open('r', *args, **kwargs) as strm:
+            return strm.read()
 
     def read_bytes(self):
-        with self.open() as strm:
+        with self.open('rb') as strm:
             return strm.read()
 
     def _is_child(self, path):
         return posixpath.dirname(path.at.rstrip("/")) == self.at.rstrip("/")
 
     def _next(self, at):
-        return Path(self.root, at)
+        return self.__class__(self.root, at)
 
     def is_dir(self):
         return not self.at or self.at.endswith("/")
 
     def is_file(self):
-        return not self.is_dir()
+        return self.exists() and not self.is_dir()
 
     def exists(self):
-        return self.at in self._names()
+        return self.at in self.root._name_set()
 
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        subs = map(self._next, self._names())
+        subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)
 
     def __str__(self):
@@ -152,21 +286,10 @@ class Path:
         return self.__repr.format(self=self)
 
     def joinpath(self, add):
-        add = self._pathlib_compat(add)
-        next = posixpath.join(self.at, add)
-        next_dir = posixpath.join(self.at, add, "")
-        names = self._names()
-        return self._next(next_dir if next not in names and next_dir in names else next)
+        next = posixpath.join(self.at, _pathlib_compat(add))
+        return self._next(self.root.resolve_dir(next))
 
     __truediv__ = joinpath
-
-    @staticmethod
-    def _add_implied_dirs(names):
-        return names + [
-            name + "/"
-            for name in map(posixpath.dirname, names)
-            if name and name + "/" not in names
-        ]
 
     @property
     def parent(self):
@@ -176,9 +299,3 @@ class Path:
         if parent_at:
             parent_at += '/'
         return self._next(parent_at)
-
-    def _names(self):
-        return self._add_implied_dirs(self.root.namelist())
-
-    if sys.version_info < (3,):
-        __div__ = __truediv__
