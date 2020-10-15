@@ -345,3 +345,10 @@ class TestPath(unittest.TestCase):
         sub = root / "b"
         assert sub.name == "b"
         assert sub.parent
+
+    @pass_alpharep
+    def test_inheritance(self, alpharep):
+        cls = type('PathChild', (zipp.Path,), {})
+        for alpharep in self.zipfile_alpharep():
+            file = cls(alpharep).joinpath('some dir').parent
+            assert isinstance(file, cls)
