@@ -1,3 +1,8 @@
+v3.3.1
+======
+
+bpo-42043: Add tests capturing subclassing requirements.
+
 v3.3.0
 ======
 
