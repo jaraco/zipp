@@ -2,6 +2,7 @@ import io
 import posixpath
 import itertools
 import contextlib
+import pathlib
 
 
 class ZipFile:
@@ -102,13 +103,12 @@ class CompleteDirs(ZipFile):
         if not isinstance(source, ZipFile):
             return cls(source)
 
-        # Only allow for FastPath when supplied zipfile is read-only
+        # Only allow for FastLookup when supplied zipfile is read-only
         if 'r' not in source.mode:
             cls = CompleteDirs
 
-        res = cls.__new__(cls)
-        vars(res).update(vars(source))
-        return res
+        source.__class__ = cls
+        return source
 
 
 class FastLookup(CompleteDirs):
@@ -116,6 +116,7 @@ class FastLookup(CompleteDirs):
     ZipFile subclass to ensure implicit
     dirs exist and are resolved rapidly.
     """
+
     def namelist(self):
         with contextlib.suppress(AttributeError):
             return self.__names
@@ -147,7 +148,7 @@ class Path:
     >>> zf.writestr('a.txt', 'content of a')
     >>> zf.writestr('b/c.txt', 'content of c')
     >>> zf.writestr('b/d/e.txt', 'content of e')
-    >>> zf.filename = 'abcde.zip'
+    >>> zf.filename = 'mem/abcde.zip'
 
     Path accepts the zipfile object itself or a filename
 
@@ -159,9 +160,9 @@ class Path:
 
     >>> a, b = root.iterdir()
     >>> a
-    Path('abcde.zip', 'a.txt')
+    Path('mem/abcde.zip', 'a.txt')
     >>> b
-    Path('abcde.zip', 'b/')
+    Path('mem/abcde.zip', 'b/')
 
     name property:
 
@@ -172,7 +173,7 @@ class Path:
 
     >>> c = b / 'c.txt'
     >>> c
-    Path('abcde.zip', 'b/c.txt')
+    Path('mem/abcde.zip', 'b/c.txt')
     >>> c.name
     'c.txt'
 
@@ -190,13 +191,35 @@ class Path:
 
     Coercion to string:
 
-    >>> str(c)
-    'abcde.zip/b/c.txt'
+    >>> import os
+    >>> str(c).replace(os.sep, posixpath.sep)
+    'mem/abcde.zip/b/c.txt'
+
+    At the root, ``name``, ``filename``, and ``parent``
+    resolve to the zipfile. Note these attributes are not
+    valid and will raise a ``ValueError`` if the zipfile
+    has no filename.
+
+    >>> root.name
+    'abcde.zip'
+    >>> str(root.filename).replace(os.sep, posixpath.sep)
+    'mem/abcde.zip'
+    >>> str(root.parent)
+    'mem'
     """
 
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
 
     def __init__(self, root, at=""):
+        """
+        Construct a Path from a ZipFile or filename.
+
+        Note: When the source is an existing ZipFile object,
+        its type (__class__) will be mutated to a
+        specialized type. If the caller wishes to retain the
+        original type, the caller should either create a
+        separate ZipFile object or pass a filename.
+        """
         self.root = FastLookup.make(root)
         self.at = at
 
@@ -206,7 +229,11 @@ class Path:
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
+        if self.is_dir():
+            raise IsADirectoryError(self)
         zip_mode = mode[0]
+        if not self.exists() and zip_mode == 'r':
+            raise FileNotFoundError(self)
         stream = self.root.open(self.at, zip_mode, pwd=pwd)
         if 'b' in mode:
             if args or kwargs:
@@ -216,7 +243,11 @@ class Path:
 
     @property
     def name(self):
-        return posixpath.basename(self.at.rstrip("/"))
+        return pathlib.Path(self.at).name or self.filename.name
+
+    @property
+    def filename(self):
+        return pathlib.Path(self.root.filename).joinpath(self.at)
 
     def read_text(self, *args, **kwargs):
         with self.open('r', *args, **kwargs) as strm:
@@ -230,13 +261,13 @@ class Path:
         return posixpath.dirname(path.at.rstrip("/")) == self.at.rstrip("/")
 
     def _next(self, at):
-        return Path(self.root, at)
+        return self.__class__(self.root, at)
 
     def is_dir(self):
         return not self.at or self.at.endswith("/")
 
     def is_file(self):
-        return not self.is_dir()
+        return self.exists() and not self.is_dir()
 
     def exists(self):
         return self.at in self.root._name_set()
@@ -261,6 +292,8 @@ class Path:
 
     @property
     def parent(self):
+        if not self.at:
+            return self.filename.parent
         parent_at = posixpath.dirname(self.at.rstrip('/'))
         if parent_at:
             parent_at += '/'
