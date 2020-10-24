@@ -108,7 +108,7 @@ Relies on a .flake8 file to correct some default behaviors:
 
 ## Continuous Integration
 
-The project is pre-configured to run tests through multiple CI providers.
+The project is pre-configured to run Continuous Integration tests.
 
 ### Github Actions
 
@@ -119,39 +119,13 @@ Features include:
 - run on late (and updated) platform versions
 - automated releases of tagged commits
 
-### Azure Pipelines
-
-[Azure Pipelines](https://azure.microsoft.com/en-us/services/devops/pipelines/) were adopted for free, fast, multi-platform services. See azure-pipelines.yml for more details.
-
-Azure Pipelines require many [complicated setup steps](https://github.com/Azure/azure-devops-cli-extension/issues/968) that have not been readily automated.
-
-Features include:
-
-- test against multiple Python versions
-- run on Ubuntu Bionic
-
-### Travis CI
-
-[Travis CI](https://travis-ci.org) is configured through .travis.yml. Any new project must be enabled either through their web site or with the `travis enable` command.
-
-Features include:
-- test against Python 3
-- run on Ubuntu Bionic
-- correct for broken IPv6
-
-### AppVeyor
-
-A minimal template for running under AppVeyor (Windows) is provided.
-
 ### Continuous Deployments
 
 In addition to running tests, an additional publish stage is configured to automatically release tagged commits to PyPI using [API tokens](https://pypi.org/help/#apitoken). The release process expects an authorized token to be configured with each Github project (or org) `PYPI_TOKEN` [secret](https://docs.github.com/en/free-pro-team@latest/actions/reference/encrypted-secrets). Example:
 
 ```
-pip-run -q setuptools jaraco.develop -- -m jaraco.develop.add-github-secret PYPI_TOKEN $TOKEN --project org/repo
+pip-run -q jaraco.develop -- -m jaraco.develop.add-github-secrets
 ```
-
-<!-- note setuptools is required due to a [bug in munch](https://github.com/Infinidat/munch/issues/67) -->
 
 ## Building Documentation
 
