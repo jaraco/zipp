@@ -1,3 +1,8 @@
+v3.3.2
+======
+
+Updated project metadata including badges.
+
 v3.3.1
 ======
 
