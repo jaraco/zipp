@@ -1,3 +1,10 @@
+v3.4.0
+======
+
+#68 and bpo-42090: ``Path.joinpath`` now takes arbitrary
+positional arguments and no longer accepts ``add`` as a
+keyword argument.
+
 v3.3.2
 ======
 
