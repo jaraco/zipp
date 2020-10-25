@@ -200,6 +200,12 @@ class TestPath(unittest.TestCase):
         assert e.read_text() == "content of e"
 
     @pass_alpharep
+    def test_joinpath_multiple(self, alpharep):
+        root = zipp.Path(alpharep)
+        e = root.joinpath("b", "d", "e.txt")
+        assert e.read_text() == "content of e"
+
+    @pass_alpharep
     def test_traverse_truediv(self, alpharep):
         root = zipp.Path(alpharep)
         a = root / "a.txt"
