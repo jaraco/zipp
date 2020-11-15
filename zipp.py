@@ -237,7 +237,7 @@ class Path:
         self.root = FastLookup.make(root)
         self.at = at
 
-    def open(self, mode='r', *args, pwd=None, **kwargs):
+    def open(self, mode='r', pwd=None, *args, **kwargs):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
