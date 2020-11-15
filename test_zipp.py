@@ -173,8 +173,6 @@ class TestPath(unittest.TestCase):
         root = zipp.Path(alpharep)
         with self.assertRaises(ValueError):
             root.joinpath('a.txt').open('rb', encoding='utf-8')
-        with self.assertRaises(ValueError):
-            root.joinpath('a.txt').open('rb', 'utf-8')
 
     def test_open_missing_directory(self):
         """
