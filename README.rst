@@ -1,20 +1,18 @@
 .. image:: https://img.shields.io/pypi/v/zipp.svg
-   :target: https://pypi.org/project/zipp
+   :target: `PyPI link`_
 
 .. image:: https://img.shields.io/pypi/pyversions/zipp.svg
+   :target: `PyPI link`_
 
-.. image:: https://dev.azure.com/jaraco/zipp/_apis/build/status/jaraco.zipp?branchName=master
-   :target: https://dev.azure.com/jaraco/zipp/_build/latest?definitionId=1&branchName=master
+.. _PyPI link: https://pypi.org/project/zipp
 
-.. image:: https://img.shields.io/travis/jaraco/zipp/master.svg
-   :target: https://travis-ci.org/jaraco/zipp
+.. image:: https://github.com/jaraco/zipp/workflows/tests/badge.svg
+   :target: https://github.com/jaraco/zipp/actions?query=workflow%3A%22tests%22
+   :alt: tests
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
    :alt: Code style: Black
-
-.. image:: https://img.shields.io/appveyor/ci/jaraco/zipp/master.svg
-   :target: https://ci.appveyor.com/project/jaraco/zipp/branch/master
 
 .. .. image:: https://readthedocs.org/projects/zipp/badge/?version=latest
 ..    :target: https://zipp.readthedocs.io/en/latest/?badge=latest
