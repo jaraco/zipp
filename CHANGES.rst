@@ -1,3 +1,8 @@
+v3.5.0
+======
+
+Two ``Path`` objects now compare as equal when appropriate.
+
 v3.4.0
 ======
 
