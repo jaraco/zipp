@@ -18,5 +18,5 @@
 ..    :target: https://zipp.readthedocs.io/en/latest/?badge=latest
 
 
-A pathlib-compatible Zipfile object wrapper. A backport of the
+A pathlib-compatible Zipfile object wrapper. Official backport of the standard library
 `Path object <https://docs.python.org/3.8/library/zipfile.html#path-objects>`_.
