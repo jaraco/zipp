@@ -145,7 +145,7 @@ class TestPath(unittest.TestCase):
     def test_open(self, alpharep):
         root = zipp.Path(alpharep)
         a, b, g = root.iterdir()
-        with a.open() as strm:
+        with a.open(encoding="utf-8") as strm:
             data = strm.read()
         assert data == "content of a"
 
@@ -157,7 +157,7 @@ class TestPath(unittest.TestCase):
         zf = zipp.Path(zipfile.ZipFile(io.BytesIO(), mode='w'))
         with zf.joinpath('file.bin').open('wb') as strm:
             strm.write(b'binary contents')
-        with zf.joinpath('file.txt').open('w') as strm:
+        with zf.joinpath('file.txt').open('w', encoding="utf-8") as strm:
             strm.write('text file')
 
     def test_open_extant_directory(self):
@@ -188,7 +188,7 @@ class TestPath(unittest.TestCase):
     def test_read(self, alpharep):
         root = zipp.Path(alpharep)
         a, b, g = root.iterdir()
-        assert a.read_text() == "content of a"
+        assert a.read_text(encoding="utf-8") == "content of a"
         assert a.read_bytes() == b"content of a"
 
     @pass_alpharep
@@ -197,13 +197,13 @@ class TestPath(unittest.TestCase):
         a = root.joinpath("a.txt")
         assert a.is_file()
         e = root.joinpath("b").joinpath("d").joinpath("e.txt")
-        assert e.read_text() == "content of e"
+        assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_joinpath_multiple(self, alpharep):
         root = zipp.Path(alpharep)
         e = root.joinpath("b", "d", "e.txt")
-        assert e.read_text() == "content of e"
+        assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_traverse_truediv(self, alpharep):
@@ -211,7 +211,7 @@ class TestPath(unittest.TestCase):
         a = root / "a.txt"
         assert a.is_file()
         e = root / "b" / "d" / "e.txt"
-        assert e.read_text() == "content of e"
+        assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_traverse_simplediv(self, alpharep):
@@ -268,9 +268,9 @@ class TestPath(unittest.TestCase):
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
         assert any(child.name == 'foo.txt' for child in root.iterdir())
-        assert (root / 'foo.txt').read_text() == 'foo'
+        assert (root / 'foo.txt').read_text(encoding="utf-8") == 'foo'
         (baz,) = (root / 'bar').iterdir()
-        assert baz.read_text() == 'baz'
+        assert baz.read_text(encoding="utf-8") == 'baz'
 
     HUGE_ZIPFILE_NUM_ENTRIES = 2**13
 
@@ -304,7 +304,7 @@ class TestPath(unittest.TestCase):
         alpharep = self.zipfile_ondisk(alpharep)
         with zipfile.ZipFile(alpharep) as file:
             for rep in range(2):
-                zipp.Path(file, 'a.txt').read_text()
+                zipp.Path(file, 'a.txt').read_text(encoding="utf-8")
 
     @pass_alpharep
     def test_subclass(self, alpharep):
