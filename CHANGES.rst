@@ -1,3 +1,9 @@
+v3.5.0
+======
+
+#74 and bpo-44095: Added ``.suffix``, ``.suffixes``,
+and ``.stem`` properties.
+
 v3.4.2
 ======
 
