@@ -14,8 +14,11 @@
    :target: https://github.com/psf/black
    :alt: Code style: Black
 
-.. .. image:: https://readthedocs.org/projects/zipp/badge/?version=latest
-..    :target: https://zipp.readthedocs.io/en/latest/?badge=latest
+.. .. image:: https://readthedocs.org/projects/skeleton/badge/?version=latest
+..    :target: https://skeleton.readthedocs.io/en/latest/?badge=latest
+
+.. image:: https://img.shields.io/badge/skeleton-2021-informational
+   :target: https://blog.jaraco.com/skeleton
 
 
 A pathlib-compatible Zipfile object wrapper. Official backport of the standard library
