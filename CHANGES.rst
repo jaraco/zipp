@@ -1,3 +1,8 @@
+v3.4.2
+======
+
+Refresh package metadata.
+
 v3.4.1
 ======
 
