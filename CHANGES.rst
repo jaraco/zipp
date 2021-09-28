@@ -1,3 +1,8 @@
+v3.5.1
+======
+
+#77: Remove news file intended only for CPython.
+
 v3.5.0
 ======
 
