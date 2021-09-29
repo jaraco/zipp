@@ -1,3 +1,8 @@
+v3.6.0
+======
+
+#78: Only ``Path`` is exposed in the public API.
+
 v3.5.1
 ======
 
