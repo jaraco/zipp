@@ -23,3 +23,29 @@
 
 A pathlib-compatible Zipfile object wrapper. Official backport of the standard library
 `Path object <https://docs.python.org/3.8/library/zipfile.html#path-objects>`_.
+
+
+Compatibility
+=============
+
+New features are introduced in this third-party library and later merged
+into CPython. The following table indicates which versions of this library
+were contributed to different versions in the standard library:
+
+.. list-table::
+   :header-rows: 1
+
+   * - zipp
+     - stdlib
+   * - 3.5
+     - 3.11
+   * - 3.3
+     - 3.9
+   * - 1.0
+     - 3.8
+
+
+Usage
+=====
+
+Use ``zipp.Path`` in place of ``zipfile.Path`` on any Python.
