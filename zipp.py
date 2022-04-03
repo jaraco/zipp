@@ -3,13 +3,7 @@ import posixpath
 import zipfile
 import itertools
 import contextlib
-import sys
 import pathlib
-
-if sys.version_info < (3, 7):
-    from collections import OrderedDict
-else:
-    OrderedDict = dict
 
 
 __all__ = ['Path']
@@ -56,7 +50,7 @@ def _ancestry(path):
         path, tail = posixpath.split(path)
 
 
-_dedupe = OrderedDict.fromkeys
+_dedupe = dict.fromkeys
 """Deduplicate an iterable in original order"""
 
 
