@@ -1,3 +1,8 @@
+v3.8.0
+======
+
+Removed compatibility code.
+
 v3.7.0
 ======
 
