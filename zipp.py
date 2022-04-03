@@ -101,7 +101,7 @@ class CompleteDirs(zipfile.ZipFile):
             return source
 
         if not isinstance(source, zipfile.ZipFile):
-            return cls(_pathlib_compat(source))
+            return cls(source)
 
         # Only allow for FastLookup when supplied zipfile is read-only
         if 'r' not in source.mode:
@@ -128,17 +128,6 @@ class FastLookup(CompleteDirs):
             return self.__lookup
         self.__lookup = super(FastLookup, self)._name_set()
         return self.__lookup
-
-
-def _pathlib_compat(path):
-    """
-    For path-like objects, convert to a filename for compatibility
-    on Python 3.6.1 and earlier.
-    """
-    try:
-        return path.__fspath__()
-    except AttributeError:
-        return str(path)
 
 
 class Path:
@@ -308,7 +297,7 @@ class Path:
         return self.__repr.format(self=self)
 
     def joinpath(self, *other):
-        next = posixpath.join(self.at, *map(_pathlib_compat, other))
+        next = posixpath.join(self.at, *other)
         return self._next(self.root.resolve_dir(next))
 
     __truediv__ = joinpath
