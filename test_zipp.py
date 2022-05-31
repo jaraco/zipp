@@ -422,8 +422,12 @@ class TestPath(unittest.TestCase):
         try:
             path_1 = zipp.Path("/path/to/a/file.zip")
             path_1_pickle = pickle.dumps(path_1)
+            path_1_load = pickle.loads(path_1_pickle)
+            assert path_1.root == path_1_load.root
             path_2 = zipp.Path("/path/to/a/file.zip", at="something.txt")
             path_2_pickle = pickle.dumps(path_2)
+            path_2_load = pickle.loads(path_2_pickle)
+            assert path_2.root == path_2_load.root
         except TypeError as exec:
             assert False, "TypeError: Path is not pickleable"
 
@@ -431,7 +435,11 @@ class TestPath(unittest.TestCase):
         try:
             path_1 = zipp.Path(pathlib.Path("/path/to/a/file.zip"))
             path_1_pickle = pickle.dumps(path_1)
+            path_1_load = pickle.loads(path_1_pickle)
+            assert path_1.root == path_1_load.root
             path_2 = zipp.Path(pathlib.Path("/path/to/a/file.zip", at="something.txt"))
             path_2_pickle = pickle.dumps(path_2)
+            path_2_load = pickle.loads(path_2_pickle)
+            assert path_2.root == path_2_load.root
         except TypeError as exec:
             assert False, "TypeError: Path is not pickleable"

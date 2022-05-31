@@ -61,22 +61,38 @@ def _difference(minuend, subtrahend):
     """
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
-class LazyClass():
+class PickleableClass():
     """
-    Utility object that wraps another object that, for example,
-    might hold a file object, and emits a new object on every
-    method call"""
+    Utility object that wraps another un-pickleable object that, 
+    for example, might hold a file object, and saves the 
+    initialization parameters. When pickeled, the un-pickleable
+    object is discarded, and when loaded, it is rebuilt from the
+    initialization params."""
     _class = object
-    _exempt_names = ("__getstate__", "__setstate__")
+
     def __init__(self, *args, **kwargs):
-        self.args = args
-        self.kwargs = kwargs
+        self._args = args
+        self._kwargs = kwargs
+        self._obj = None
 
     def __getattr__(self, name):
-        if name in self._exempt_names:
-            raise AttributeError(f"type object '{type(self)}' has not attribute '{name}'")
-        obj = self._class(*self.args, **self.kwargs)
-        return getattr(obj, name)
+        if self._obj is None:
+            self._obj = self._class(*self._args, **self._kwargs)
+        return getattr(self._obj, name)
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        state['_obj'] = None
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(class={self._class}, args={self._args}, kwargs={self._kwargs})"
+
+    def __eq__(self, other):
+        return self._class == other._class and self._args == other._args and self._kwargs == other._kwargs
 
 
 class CompleteDirs(zipfile.ZipFile):
@@ -146,8 +162,12 @@ class FastLookup(CompleteDirs):
         self.__lookup = super(FastLookup, self)._name_set()
         return self.__lookup
 
-class LazyFastLookup(LazyClass):
+class PickleableFastLookup(PickleableClass):
     _class = FastLookup
+
+    @property
+    def filename(self):
+        return self._args[0]
 
 
 class Path:
@@ -252,7 +272,7 @@ class Path:
             return source
 
         if isinstance(source, (str, pathlib.Path)):
-            return LazyFastLookup(source)
+            return PickleableFastLookup(source)
 
         if not isinstance(source, zipfile.ZipFile):
             return FastLookup(source)
