@@ -61,6 +61,23 @@ def _difference(minuend, subtrahend):
     """
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
+class LazyClass():
+    """
+    Utility object that wraps another object that, for example,
+    might hold a file object, and emits a new object on every
+    method call"""
+    _class = object
+    _exempt_names = ("__getstate__", "__setstate__")
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+
+    def __getattr__(self, name):
+        if name in self._exempt_names:
+            raise AttributeError(f"type object '{type(self)}' has not attribute '{name}'")
+        obj = self._class(*self.args, **self.kwargs)
+        return getattr(obj, name)
+
 
 class CompleteDirs(zipfile.ZipFile):
     """
@@ -128,6 +145,9 @@ class FastLookup(CompleteDirs):
             return self.__lookup
         self.__lookup = super(FastLookup, self)._name_set()
         return self.__lookup
+
+class LazyFastLookup(LazyClass):
+    _class = FastLookup
 
 
 class Path:
@@ -220,8 +240,31 @@ class Path:
         original type, the caller should either create a
         separate ZipFile object or pass a filename.
         """
-        self.root = FastLookup.make(root)
+        self.root = self._make_root(root)
         self.at = at
+
+    def _make_root(self, source):
+        """
+        Given a source (filename or zipfile), return an
+        appropriate root object.
+        """
+        if isinstance(source, CompleteDirs):
+            return source
+
+        if isinstance(source, (str, pathlib.Path)):
+            return LazyFastLookup(source)
+
+        if not isinstance(source, zipfile.ZipFile):
+            return FastLookup(source)
+
+        # Only allow for FastLookup when supplied zipfile is read-only
+        if 'r' not in source.mode:
+            subcls = CompleteDirs
+        else:
+            subcls = FastLookup
+
+        source.__class__ = subcls
+        return source
 
     def open(self, mode='r', *args, pwd=None, **kwargs):
         """
