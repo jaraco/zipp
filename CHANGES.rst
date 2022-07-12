@@ -1,3 +1,10 @@
+v3.8.1
+======
+
+Refreshed packaging.
+
+Enrolled with Tidelift.
+
 v3.8.0
 ======
 
