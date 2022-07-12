@@ -7,6 +7,8 @@ Welcome to |project| documentation!
    history
 
 
+.. tidelift-referral-banner::
+
 .. automodule:: zipp
     :members:
     :undoc-members:
@@ -19,4 +21,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
