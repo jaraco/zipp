@@ -73,10 +73,11 @@ class InitializedState:
         super().__init__(*args, **kwargs)
 
     def __getstate__(self):
-        return dict(args=self.__args, kwargs=self.__kwargs)
+        return self.__args, self.__kwargs
 
     def __setstate__(self, state):
-        super().__init__(*state['args'], **state['kwargs'])
+        args, kwargs = state
+        super().__init__(*args, **kwargs)
 
 
 class CompleteDirs(InitializedState, zipfile.ZipFile):
