@@ -91,7 +91,8 @@ class PickleableClass:
         self.__dict__.update(state)
 
     def __repr__(self):
-        return f"{self.__class__.__name__}(class={self._class}, args={self._args}, kwargs={self._kwargs})"
+        args = f"class={self._class}, args={self._args}, kwargs={self._kwargs}"
+        return f"{self.__class__.__name__}({args})"
 
     def __eq__(self, other):
         return (
