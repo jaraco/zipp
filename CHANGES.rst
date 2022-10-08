@@ -1,3 +1,10 @@
+v3.9.0
+======
+
+* #81: ``Path`` objects are now pickleable if they've been
+  constructed from pickleable objects. Any restored objects
+  will re-construct the zip file with the original arguments.
+
 v3.8.1
 ======
 

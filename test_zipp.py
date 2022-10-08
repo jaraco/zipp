@@ -6,6 +6,8 @@ import unittest
 import tempfile
 import shutil
 import string
+import pickle
+import itertools
 
 import jaraco.itertools
 import func_timeout
@@ -74,13 +76,12 @@ def temp_dir():
         shutil.rmtree(tmpdir)
 
 
-pass_alpharep = parameterize(
-    ['alpharep'],
-    [
-        Invoked.wrap(build_alpharep_fixture),
-        Invoked.wrap(compose(add_dirs, build_alpharep_fixture)),
-    ],
-)
+alpharep_generators = [
+    Invoked.wrap(build_alpharep_fixture),
+    Invoked.wrap(compose(add_dirs, build_alpharep_fixture)),
+]
+
+pass_alpharep = parameterize(['alpharep'], alpharep_generators)
 
 
 class TestPath(unittest.TestCase):
@@ -407,3 +408,20 @@ class TestPath(unittest.TestCase):
         cls = type('PathChild', (zipp.Path,), {})
         file = cls(alpharep).joinpath('some dir').parent
         assert isinstance(file, cls)
+
+    @parameterize(
+        ['alpharep', 'path_type', 'subpath'],
+        itertools.product(
+            alpharep_generators,
+            [str, pathlib.Path],
+            ['', 'b/'],
+        ),
+    )
+    def test_pickle(self, alpharep, path_type, subpath):
+        print(alpharep, path_type, subpath)
+        zipfile_ondisk = path_type(self.zipfile_ondisk(alpharep))
+
+        saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk, at=subpath))
+        restored_1 = pickle.loads(saved_1)
+        first, *rest = restored_1.iterdir()
+        assert first.read_text().startswith('content of ')
