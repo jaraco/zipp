@@ -7,6 +7,7 @@ import tempfile
 import shutil
 import string
 import pickle
+import itertools
 
 import jaraco.itertools
 import func_timeout
@@ -75,13 +76,12 @@ def temp_dir():
         shutil.rmtree(tmpdir)
 
 
-pass_alpharep = parameterize(
-    ['alpharep'],
-    [
-        Invoked.wrap(build_alpharep_fixture),
-        Invoked.wrap(compose(add_dirs, build_alpharep_fixture)),
-    ],
-)
+alpharep_generators = [
+    Invoked.wrap(build_alpharep_fixture),
+    Invoked.wrap(compose(add_dirs, build_alpharep_fixture)),
+]
+
+pass_alpharep = parameterize(['alpharep'], alpharep_generators)
 
 
 class TestPath(unittest.TestCase):
@@ -409,30 +409,19 @@ class TestPath(unittest.TestCase):
         file = cls(alpharep).joinpath('some dir').parent
         assert isinstance(file, cls)
 
-    @pass_alpharep
-    def test_can_pickle_string_path(self, alpharep):
-        zipfile_ondisk = str(self.zipfile_ondisk(alpharep))
+    @parameterize(
+        ['alpharep', 'path_type', 'subpath'],
+        itertools.product(
+            alpharep_generators,
+            [str, pathlib.Path],
+            ['', 'b/'],
+        ),
+    )
+    def test_pickle(self, alpharep, path_type, subpath):
+        print(alpharep, path_type, subpath)
+        zipfile_ondisk = path_type(self.zipfile_ondisk(alpharep))
 
-        saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk))
+        saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk, at=subpath))
         restored_1 = pickle.loads(saved_1)
-        a, b, g = restored_1.iterdir()
-        assert a.read_text() == "content of a"
-
-        saved_2 = pickle.dumps(zipp.Path(zipfile_ondisk, at="b/"))
-        restored_2 = pickle.loads(saved_2)
-        c, d, f = restored_2.iterdir()
-        assert c.read_text() == 'content of c'
-
-    @pass_alpharep
-    def test_can_pickle_pathlib_path(self, alpharep):
-        zipfile_ondisk = self.zipfile_ondisk(alpharep)
-
-        saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk))
-        restored_1 = pickle.loads(saved_1)
-        a, b, g = restored_1.iterdir()
-        assert a.read_text() == "content of a"
-
-        saved_2 = pickle.dumps(zipp.Path(zipfile_ondisk, at="b/"))
-        restored_2 = pickle.loads(saved_2)
-        c, d, f = restored_2.iterdir()
-        assert c.read_text() == 'content of c'
+        first, *rest = restored_1.iterdir()
+        assert first.read_text().startswith('content of ')
