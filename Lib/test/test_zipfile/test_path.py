@@ -6,7 +6,7 @@ import unittest
 import string
 import functools
 
-from test.support import temp_dir
+from test.support.os_helper import temp_dir
 
 
 # Poor man's technique to consume a (smallish) iterable.
