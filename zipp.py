@@ -62,47 +62,24 @@ def _difference(minuend, subtrahend):
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
 
-class PickleableClass:
+class InitializedState:
     """
-    Utility object that wraps another un-pickleable object that,
-    for example, might hold a file object, and saves the
-    initialization parameters. When pickeled, the un-pickleable
-    object is discarded, and when loaded, it is rebuilt from the
-    initialization params."""
-
-    _class: type = object
+    Mix-in to save the initialization state for pickling.
+    """
 
     def __init__(self, *args, **kwargs):
-        self._args = args
-        self._kwargs = kwargs
-        self._obj = None
-
-    def __getattr__(self, name):
-        if self._obj is None:
-            self._obj = self._class(*self._args, **self._kwargs)
-        return getattr(self._obj, name)
+        self.__args = args
+        self.__kwargs = kwargs
+        super().__init__(*args, **kwargs)
 
     def __getstate__(self):
-        state = self.__dict__.copy()
-        state['_obj'] = None
-        return state
+        return dict(args=self.__args, kwargs=self.__kwargs)
 
     def __setstate__(self, state):
-        self.__dict__.update(state)
-
-    def __repr__(self):
-        args = f"class={self._class}, args={self._args}, kwargs={self._kwargs}"
-        return f"{self.__class__.__name__}({args})"
-
-    def __eq__(self, other):
-        return (
-            self._class == other._class
-            and self._args == other._args
-            and self._kwargs == other._kwargs
-        )
+        super().__init__(*state['args'], **state['kwargs'])
 
 
-class CompleteDirs(zipfile.ZipFile):
+class CompleteDirs(InitializedState, zipfile.ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
     are always included in the namelist.
@@ -168,14 +145,6 @@ class FastLookup(CompleteDirs):
             return self.__lookup
         self.__lookup = super(FastLookup, self)._name_set()
         return self.__lookup
-
-
-class PickleableFastLookup(PickleableClass):
-    _class = FastLookup
-
-    @property
-    def filename(self):
-        return self._args[0]
 
 
 class Path:
@@ -268,31 +237,8 @@ class Path:
         original type, the caller should either create a
         separate ZipFile object or pass a filename.
         """
-        self.root = self._make_root(root)
+        self.root = FastLookup.make(root)
         self.at = at
-
-    def _make_root(self, source):
-        """
-        Given a source (filename or zipfile), return an
-        appropriate root object.
-        """
-        if isinstance(source, CompleteDirs):
-            return source
-
-        if isinstance(source, (str, pathlib.Path)):
-            return PickleableFastLookup(source)
-
-        if not isinstance(source, zipfile.ZipFile):
-            return FastLookup(source)
-
-        # Only allow for FastLookup when supplied zipfile is read-only
-        if 'r' not in source.mode:
-            subcls = CompleteDirs
-        else:
-            subcls = FastLookup
-
-        source.__class__ = subcls
-        return source
 
     def open(self, mode='r', *args, pwd=None, **kwargs):
         """
