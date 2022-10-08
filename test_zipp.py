@@ -418,7 +418,6 @@ class TestPath(unittest.TestCase):
         ),
     )
     def test_pickle(self, alpharep, path_type, subpath):
-        print(alpharep, path_type, subpath)
         zipfile_ondisk = path_type(self.zipfile_ondisk(alpharep))
 
         saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk, at=subpath))

@@ -1,3 +1,8 @@
+v3.9.1
+======
+
+Removed 'print' expression in test_pickle.
+
 v3.9.0
 ======
 
