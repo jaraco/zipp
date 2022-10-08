@@ -1,12 +1,12 @@
 import io
 import posixpath
+import zipfile
 import itertools
 import contextlib
 import pathlib
 
 
-class ZipFile:
-    pass
+__all__ = ['Path']
 
 
 def _parents(path):
@@ -62,7 +62,7 @@ def _difference(minuend, subtrahend):
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
 
-class CompleteDirs(ZipFile):
+class CompleteDirs(zipfile.ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
     are always included in the namelist.
@@ -100,7 +100,7 @@ class CompleteDirs(ZipFile):
         if isinstance(source, CompleteDirs):
             return source
 
-        if not isinstance(source, ZipFile):
+        if not isinstance(source, zipfile.ZipFile):
             return cls(source)
 
         # Only allow for FastLookup when supplied zipfile is read-only
@@ -239,6 +239,8 @@ class Path:
             if args or kwargs:
                 raise ValueError("encoding args invalid for binary operation")
             return stream
+        else:
+            kwargs["encoding"] = io.text_encoding(kwargs.get("encoding"))
         return io.TextIOWrapper(stream, *args, **kwargs)
 
     @property
@@ -246,10 +248,23 @@ class Path:
         return pathlib.Path(self.at).name or self.filename.name
 
     @property
+    def suffix(self):
+        return pathlib.Path(self.at).suffix or self.filename.suffix
+
+    @property
+    def suffixes(self):
+        return pathlib.Path(self.at).suffixes or self.filename.suffixes
+
+    @property
+    def stem(self):
+        return pathlib.Path(self.at).stem or self.filename.stem
+
+    @property
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
     def read_text(self, *args, **kwargs):
+        kwargs["encoding"] = io.text_encoding(kwargs.get("encoding"))
         with self.open('r', *args, **kwargs) as strm:
             return strm.read()
 

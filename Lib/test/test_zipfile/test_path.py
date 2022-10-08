@@ -150,7 +150,7 @@ class TestPath(unittest.TestCase):
     def test_open(self, alpharep):
         root = zipfile.Path(alpharep)
         a, b, g = root.iterdir()
-        with a.open() as strm:
+        with a.open(encoding="utf-8") as strm:
             data = strm.read()
         assert data == "content of a"
 
@@ -162,7 +162,7 @@ class TestPath(unittest.TestCase):
         zf = zipfile.Path(zipfile.ZipFile(io.BytesIO(), mode='w'))
         with zf.joinpath('file.bin').open('wb') as strm:
             strm.write(b'binary contents')
-        with zf.joinpath('file.txt').open('w') as strm:
+        with zf.joinpath('file.txt').open('w', encoding="utf-8") as strm:
             strm.write('text file')
 
     def test_open_extant_directory(self):
@@ -193,7 +193,7 @@ class TestPath(unittest.TestCase):
     def test_read(self, alpharep):
         root = zipfile.Path(alpharep)
         a, b, g = root.iterdir()
-        assert a.read_text() == "content of a"
+        assert a.read_text(encoding="utf-8") == "content of a"
         assert a.read_bytes() == b"content of a"
 
     @pass_alpharep
@@ -202,13 +202,13 @@ class TestPath(unittest.TestCase):
         a = root.joinpath("a.txt")
         assert a.is_file()
         e = root.joinpath("b").joinpath("d").joinpath("e.txt")
-        assert e.read_text() == "content of e"
+        assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_joinpath_multiple(self, alpharep):
         root = zipfile.Path(alpharep)
         e = root.joinpath("b", "d", "e.txt")
-        assert e.read_text() == "content of e"
+        assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_traverse_truediv(self, alpharep):
@@ -216,7 +216,7 @@ class TestPath(unittest.TestCase):
         a = root / "a.txt"
         assert a.is_file()
         e = root / "b" / "d" / "e.txt"
-        assert e.read_text() == "content of e"
+        assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_traverse_simplediv(self, alpharep):
@@ -273,11 +273,11 @@ class TestPath(unittest.TestCase):
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
         assert any(child.name == 'foo.txt' for child in root.iterdir())
-        assert (root / 'foo.txt').read_text() == 'foo'
+        assert (root / 'foo.txt').read_text(encoding="utf-8") == 'foo'
         (baz,) = (root / 'bar').iterdir()
-        assert baz.read_text() == 'baz'
+        assert baz.read_text(encoding="utf-8") == 'baz'
 
-    HUGE_ZIPFILE_NUM_ENTRIES = 2 ** 13
+    HUGE_ZIPFILE_NUM_ENTRIES = 2**13
 
     def huge_zipfile(self):
         """Create a read-only zipfile with a huge number of entries entries."""
@@ -309,7 +309,7 @@ class TestPath(unittest.TestCase):
         alpharep = self.zipfile_ondisk(alpharep)
         with zipfile.ZipFile(alpharep) as file:
             for rep in range(2):
-                zipfile.Path(file, 'a.txt').read_text()
+                zipfile.Path(file, 'a.txt').read_text(encoding="utf-8")
 
     @pass_alpharep
     def test_subclass(self, alpharep):
@@ -331,6 +331,64 @@ class TestPath(unittest.TestCase):
         """
         root = zipfile.Path(alpharep)
         assert root.name == 'alpharep.zip' == root.filename.name
+
+    @pass_alpharep
+    def test_suffix(self, alpharep):
+        """
+        The suffix of the root should be the suffix of the zipfile.
+        The suffix of each nested file is the final component's last suffix, if any.
+        Includes the leading period, just like pathlib.Path.
+        """
+        root = zipfile.Path(alpharep)
+        assert root.suffix == '.zip' == root.filename.suffix
+
+        b = root / "b.txt"
+        assert b.suffix == ".txt"
+
+        c = root / "c" / "filename.tar.gz"
+        assert c.suffix == ".gz"
+
+        d = root / "d"
+        assert d.suffix == ""
+
+    @pass_alpharep
+    def test_suffixes(self, alpharep):
+        """
+        The suffix of the root should be the suffix of the zipfile.
+        The suffix of each nested file is the final component's last suffix, if any.
+        Includes the leading period, just like pathlib.Path.
+        """
+        root = zipfile.Path(alpharep)
+        assert root.suffixes == ['.zip'] == root.filename.suffixes
+
+        b = root / 'b.txt'
+        assert b.suffixes == ['.txt']
+
+        c = root / 'c' / 'filename.tar.gz'
+        assert c.suffixes == ['.tar', '.gz']
+
+        d = root / 'd'
+        assert d.suffixes == []
+
+        e = root / '.hgrc'
+        assert e.suffixes == []
+
+    @pass_alpharep
+    def test_stem(self, alpharep):
+        """
+        The final path component, without its suffix
+        """
+        root = zipfile.Path(alpharep)
+        assert root.stem == 'alpharep' == root.filename.stem
+
+        b = root / "b.txt"
+        assert b.stem == "b"
+
+        c = root / "c" / "filename.tar.gz"
+        assert c.stem == "filename.tar"
+
+        d = root / "d"
+        assert d.stem == "d"
 
     @pass_alpharep
     def test_root_parent(self, alpharep):
