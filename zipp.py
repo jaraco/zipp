@@ -70,7 +70,7 @@ class PickleableClass:
     object is discarded, and when loaded, it is rebuilt from the
     initialization params."""
 
-    _class = object
+    _class: type = object
 
     def __init__(self, *args, **kwargs):
         self._args = args
