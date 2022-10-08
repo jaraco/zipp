@@ -6,12 +6,15 @@ import unittest
 import tempfile
 import shutil
 import string
-import functools
 
 import jaraco.itertools
 import func_timeout
+from jaraco.functools import compose
 
 import zipp
+
+from _test_params import parameterize, Invoked
+
 
 consume = tuple
 
@@ -71,30 +74,19 @@ def temp_dir():
         shutil.rmtree(tmpdir)
 
 
-def pass_alpharep(meth):
-    """
-    Given a method, wrap it in a for loop that invokes method
-    with each subtest.
-    """
-
-    @functools.wraps(meth)
-    def wrapper(self):
-        for alpharep in self.zipfile_alpharep():
-            meth(self, alpharep=alpharep)
-
-    return wrapper
+pass_alpharep = parameterize(
+    ['alpharep'],
+    [
+        Invoked.wrap(build_alpharep_fixture),
+        Invoked.wrap(compose(add_dirs, build_alpharep_fixture)),
+    ],
+)
 
 
 class TestPath(unittest.TestCase):
     def setUp(self):
         self.fixtures = contextlib.ExitStack()
         self.addCleanup(self.fixtures.close)
-
-    def zipfile_alpharep(self):
-        with self.subTest():
-            yield build_alpharep_fixture()
-        with self.subTest():
-            yield add_dirs(build_alpharep_fixture())
 
     def zipfile_ondisk(self, alpharep):
         tmpdir = pathlib.Path(self.fixtures.enter_context(temp_dir()))
@@ -413,6 +405,5 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_inheritance(self, alpharep):
         cls = type('PathChild', (zipp.Path,), {})
-        for alpharep in self.zipfile_alpharep():
-            file = cls(alpharep).joinpath('some dir').parent
-            assert isinstance(file, cls)
+        file = cls(alpharep).joinpath('some dir').parent
+        assert isinstance(file, cls)
