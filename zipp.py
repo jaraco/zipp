@@ -61,13 +61,15 @@ def _difference(minuend, subtrahend):
     """
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
-class PickleableClass():
+
+class PickleableClass:
     """
-    Utility object that wraps another un-pickleable object that, 
-    for example, might hold a file object, and saves the 
+    Utility object that wraps another un-pickleable object that,
+    for example, might hold a file object, and saves the
     initialization parameters. When pickeled, the un-pickleable
     object is discarded, and when loaded, it is rebuilt from the
     initialization params."""
+
     _class = object
 
     def __init__(self, *args, **kwargs):
@@ -92,7 +94,11 @@ class PickleableClass():
         return f"{self.__class__.__name__}(class={self._class}, args={self._args}, kwargs={self._kwargs})"
 
     def __eq__(self, other):
-        return self._class == other._class and self._args == other._args and self._kwargs == other._kwargs
+        return (
+            self._class == other._class
+            and self._args == other._args
+            and self._kwargs == other._kwargs
+        )
 
 
 class CompleteDirs(zipfile.ZipFile):
@@ -161,6 +167,7 @@ class FastLookup(CompleteDirs):
             return self.__lookup
         self.__lookup = super(FastLookup, self)._name_set()
         return self.__lookup
+
 
 class PickleableFastLookup(PickleableClass):
     _class = FastLookup
