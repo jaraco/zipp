@@ -15,7 +15,7 @@ from jaraco.functools import compose
 
 import zipp
 
-from _test_params import parameterize, Invoked
+from ._test_params import parameterize, Invoked
 
 
 consume = tuple
