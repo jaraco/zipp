@@ -1,7 +1,9 @@
 v3.9.1
 ======
 
-Removed 'print' expression in test_pickle.
+* Removed 'print' expression in test_pickle.
+
+* bpo-43651: Apply ``io.text_encoding`` on Python 3.10 and later.
 
 v3.9.0
 ======
