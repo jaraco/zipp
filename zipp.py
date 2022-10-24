@@ -10,11 +10,9 @@ import pathlib
 __all__ = ['Path']
 
 
-def _text_encoding(encoding, stacklevel=2, /):
-    """
-    Backport stub of io.text_encoding.
-    """
-    return encoding
+te_impl = 'lambda encoding, stacklevel=2, /: encoding'
+te_impl_37 = te_impl.replace(', /', '')
+_text_encoding = eval(te_impl if sys.version_info > (3, 8) else te_impl_37)
 
 
 text_encoding = (
