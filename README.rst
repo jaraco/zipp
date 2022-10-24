@@ -40,6 +40,8 @@ were contributed to different versions in the standard library:
 
    * - zipp
      - stdlib
+   * - 3.9
+     - 3.12
    * - 3.5
      - 3.11
    * - 3.3
