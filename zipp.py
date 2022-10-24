@@ -1,4 +1,5 @@
 import io
+import sys
 import posixpath
 import zipfile
 import itertools
@@ -7,6 +8,18 @@ import pathlib
 
 
 __all__ = ['Path']
+
+
+def _text_encoding(encoding, stacklevel=2, /):
+    """
+    Backport stub of io.text_encoding.
+    """
+    return encoding
+
+
+text_encoding = (
+    io.text_encoding if sys.version_info > (3, 10) else _text_encoding  # type: ignore
+)
 
 
 def _parents(path):
@@ -258,7 +271,7 @@ class Path:
                 raise ValueError("encoding args invalid for binary operation")
             return stream
         else:
-            kwargs["encoding"] = io.text_encoding(kwargs.get("encoding"))
+            kwargs["encoding"] = text_encoding(kwargs.get("encoding"))
         return io.TextIOWrapper(stream, *args, **kwargs)
 
     @property
@@ -282,7 +295,7 @@ class Path:
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
     def read_text(self, *args, **kwargs):
-        kwargs["encoding"] = io.text_encoding(kwargs.get("encoding"))
+        kwargs["encoding"] = text_encoding(kwargs.get("encoding"))
         with self.open('r', *args, **kwargs) as strm:
             return strm.read()
 
