@@ -404,6 +404,44 @@ class TestPath(unittest.TestCase):
         assert sub.parent
 
     @pass_alpharep
+    def test_match_and_glob(self, alpharep):
+        root = zipp.Path(alpharep)
+        assert not root.match("*.txt")
+
+        assert list(root.glob("b/c.*")) == [zipp.Path(alpharep, "b/c.txt")]
+
+        files = root.glob("**/*.txt")
+        assert all(each.match("*.txt") for each in files)
+
+        assert list(root.glob("**/*.txt")) == list(root.rglob("*.txt"))
+
+    @pass_alpharep
+    def test_eq_hash(self, alpharep):
+        root = zipp.Path(alpharep)
+        assert root == zipp.Path(alpharep)
+
+        assert root != (root / "a.txt")
+        assert (root / "a.txt") == (root / "a.txt")
+
+        root = zipp.Path(alpharep)
+        assert root in {root}
+
+    @pass_alpharep
+    def test_is_symlink(self, alpharep):
+        """
+        See python/cpython#82102 for symlink support beyond this object.
+        """
+
+        root = zipp.Path(alpharep)
+        assert not root.is_symlink()
+
+    @pass_alpharep
+    def test_relative_to(self, alpharep):
+        root = zipp.Path(alpharep)
+        relative = root.joinpath("b", "c.txt").relative_to(root / "b")
+        assert relative == pathlib.Path("c.txt")
+
+    @pass_alpharep
     def test_inheritance(self, alpharep):
         cls = type('PathChild', (zipp.Path,), {})
         file = cls(alpharep).joinpath('some dir').parent

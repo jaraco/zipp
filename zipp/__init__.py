@@ -1,4 +1,5 @@
 import io
+import os
 import posixpath
 import zipfile
 import itertools
@@ -243,6 +244,14 @@ class Path:
         self.root = FastLookup.make(root)
         self.at = at
 
+    def __eq__(self, other):
+        if self.__class__ is not other.__class__:
+            return NotImplemented
+        return (self.root, self.at) == (other.root, other.at)
+
+    def __hash__(self):
+        return hash((self.root, self.at))
+
     def open(self, mode='r', *args, pwd=None, **kwargs):
         """
         Open this entry as text or binary following the semantics
@@ -312,6 +321,47 @@ class Path:
             raise ValueError("Can't listdir a file")
         subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)
+
+    def match(self, path_pattern):
+        return pathlib.Path(self.at).match(path_pattern)
+
+    def is_symlink(self):
+        return False  # See #82102
+
+    @contextlib.contextmanager
+    def _scandir(self):  # Needed for glob
+        yield self.iterdir()
+
+    def _make_child_relpath(self, relpath):  # Needed for glob
+        return self / relpath
+
+    def glob(self, pattern):
+        if not pattern:
+            raise ValueError("Unacceptable pattern: {!r}".format(pattern))
+        path = pathlib.Path(self.at)
+        drv, root, pattern_parts = path._flavour.parse_parts((pattern,))
+        if drv or root:
+            raise NotImplementedError("Non-relative patterns are unsupported")
+        if pattern[-1] in (path._flavour.sep, path._flavour.altsep):
+            pattern_parts.append('')
+        selector = pathlib._make_selector(tuple(pattern_parts), path._flavour)
+        for p in selector.select_from(self):
+            yield p
+
+    def rglob(self, pattern):
+        path = pathlib.Path(self.at)
+        drv, root, pattern_parts = path._flavour.parse_parts((pattern,))
+        if drv or root:
+            raise NotImplementedError("Non-relative patterns are unsupported")
+        if pattern and pattern[-1] in (path._flavour.sep, path._flavour.altsep):
+            pattern_parts.append('')
+        selector = pathlib._make_selector(("**",) + tuple(pattern_parts), path._flavour)
+        for p in selector.select_from(self):
+            yield p
+
+    def relative_to(self, *other, **kwargs):
+        other = (pathlib.Path(each.at) for each in other)
+        return pathlib.Path(self.at).relative_to(*other, **kwargs)
 
     def __str__(self):
         return posixpath.join(self.root.filename, self.at)
