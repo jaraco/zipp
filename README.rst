@@ -1,10 +1,7 @@
 .. image:: https://img.shields.io/pypi/v/zipp.svg
-   :target: `PyPI link`_
+   :target: https://pypi.org/project/zipp
 
 .. image:: https://img.shields.io/pypi/pyversions/zipp.svg
-   :target: `PyPI link`_
-
-.. _PyPI link: https://pypi.org/project/zipp
 
 .. image:: https://github.com/jaraco/zipp/workflows/tests/badge.svg
    :target: https://github.com/jaraco/zipp/actions?query=workflow%3A%22tests%22
