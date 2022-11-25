@@ -1,3 +1,13 @@
+v3.11.0
+=======
+
+* #85: Added support for new methods on ``Path``:
+
+  - ``match``
+  - ``glob`` and ``rglob``
+  - ``relative_to``
+  - ``is_symlink``
+
 v3.10.0
 =======
 
