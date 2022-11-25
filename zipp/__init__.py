@@ -1,5 +1,4 @@
 import io
-import os
 import posixpath
 import zipfile
 import itertools
