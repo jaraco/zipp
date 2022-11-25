@@ -331,7 +331,10 @@ class Path:
         return pathlib.Path(self.at).match(path_pattern)
 
     def is_symlink(self):
-        return False  # See #82102
+        """
+        Return whether this path is a symlink. Always false (python/cpython#82102).
+        """
+        return False
 
     def _descendants(self):
         for child in self.iterdir():
