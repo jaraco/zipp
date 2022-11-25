@@ -444,7 +444,7 @@ class TestPath(unittest.TestCase):
     def test_relative_to(self, alpharep):
         root = zipp.Path(alpharep)
         relative = root.joinpath("b", "c.txt").relative_to(root / "b")
-        assert relative == pathlib.PurePosixPath("c.txt")
+        assert str(relative) == "c.txt"
 
         relative = root.joinpath("b", "d", "e.txt").relative_to(root / "b")
         assert str(relative) == "d/e.txt"
