@@ -246,6 +246,10 @@ class Path:
         self.at = at
 
     def __eq__(self, other):
+        """
+        >>> Path(zipfile.ZipFile(io.BytesIO(), 'w')) == 'foo'
+        False
+        """
         if self.__class__ is not other.__class__:
             return NotImplemented
         return (self.root, self.at) == (other.root, other.at)
