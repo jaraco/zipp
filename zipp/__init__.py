@@ -354,8 +354,8 @@ class Path:
         return self.glob(f'**/{pattern}')
 
     def relative_to(self, *other, **kwargs):
-        other = (pathlib.Path(each.at) for each in other)
-        return pathlib.Path(self.at).relative_to(*other, **kwargs)
+        other = (pathlib.PurePosixPath(each.at) for each in other)
+        return pathlib.PurePosixPath(self.at).relative_to(*other, **kwargs)
 
     def __str__(self):
         return posixpath.join(self.root.filename, self.at)
