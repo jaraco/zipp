@@ -415,6 +415,11 @@ class TestPath(unittest.TestCase):
 
         assert list(root.glob("**/*.txt")) == list(root.rglob("*.txt"))
 
+    def test_glob_empty(self):
+        root = zipp.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
+        with self.assertRaises(ValueError):
+            root.glob('')
+
     @pass_alpharep
     def test_eq_hash(self, alpharep):
         root = zipp.Path(alpharep)
