@@ -1,0 +1,1 @@
+Rely on save_method_args to save method args.
