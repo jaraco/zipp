@@ -1,13 +1,14 @@
 import io
-import zipfile
+import itertools
 import contextlib
 import pathlib
-import unittest
 import tempfile
 import shutil
-import string
 import pickle
-import itertools
+import string
+import sys
+import unittest
+import zipfile
 
 import jaraco.itertools
 import func_timeout
@@ -140,7 +141,66 @@ class TestPath(unittest.TestCase):
         a, b, g = root.iterdir()
         with a.open(encoding="utf-8") as strm:
             data = strm.read()
-        assert data == "content of a"
+        self.assertEqual(data, "content of a")
+        with a.open('r', "utf-8") as strm:  # not a kw, no gh-101144 TypeError
+            data = strm.read()
+        self.assertEqual(data, "content of a")
+
+    def test_open_encoding_utf16(self):
+        in_memory_file = io.BytesIO()
+        zf = zipfile.ZipFile(in_memory_file, "w")
+        zf.writestr("path/16.txt", "This was utf-16".encode("utf-16"))
+        zf.filename = "test_open_utf16.zip"
+        root = zipp.Path(zf)
+        (path,) = root.iterdir()
+        u16 = path.joinpath("16.txt")
+        with u16.open('r', "utf-16") as strm:
+            data = strm.read()
+        assert data == "This was utf-16"
+        with u16.open(encoding="utf-16") as strm:
+            data = strm.read()
+        assert data == "This was utf-16"
+
+    def test_open_encoding_errors(self):
+        in_memory_file = io.BytesIO()
+        zf = zipfile.ZipFile(in_memory_file, "w")
+        zf.writestr("path/bad-utf8.bin", b"invalid utf-8: \xff\xff.")
+        zf.filename = "test_read_text_encoding_errors.zip"
+        root = zipp.Path(zf)
+        (path,) = root.iterdir()
+        u16 = path.joinpath("bad-utf8.bin")
+
+        # encoding= as a positional argument for gh-101144.
+        data = u16.read_text("utf-8", errors="ignore")
+        assert data == "invalid utf-8: ."
+        with u16.open("r", "utf-8", errors="surrogateescape") as f:
+            assert f.read() == "invalid utf-8: \udcff\udcff."
+
+        # encoding= both positional and keyword is an error; gh-101144.
+        with self.assertRaisesRegex(TypeError, "encoding"):
+            data = u16.read_text("utf-8", encoding="utf-8")
+
+        # both keyword arguments work.
+        with u16.open("r", encoding="utf-8", errors="strict") as f:
+            # error during decoding with wrong codec.
+            with self.assertRaises(UnicodeDecodeError):
+                f.read()
+
+    @unittest.skipIf(
+        not getattr(sys.flags, 'warn_default_encoding', 0),
+        "Requires warn_default_encoding",
+    )
+    @pass_alpharep
+    def test_encoding_warnings(self, alpharep):
+        """EncodingWarning must blame the read_text and open calls."""
+        assert sys.flags.warn_default_encoding
+        root = zipp.Path(alpharep)
+        with self.assertWarns(EncodingWarning) as wc:
+            root.joinpath("a.txt").read_text()
+        assert __file__ == wc.filename
+        with self.assertWarns(EncodingWarning) as wc:
+            root.joinpath("a.txt").open("r").close()
+        assert __file__ == wc.filename
 
     def test_open_write(self):
         """
@@ -182,6 +242,8 @@ class TestPath(unittest.TestCase):
         root = zipp.Path(alpharep)
         a, b, g = root.iterdir()
         assert a.read_text(encoding="utf-8") == "content of a"
+        # Also check positional encoding arg (gh-101144).
+        assert a.read_text("utf-8") == "content of a"
         assert a.read_bytes() == b"content of a"
 
     @pass_alpharep

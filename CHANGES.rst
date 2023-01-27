@@ -1,3 +1,9 @@
+v3.12.0
+=======
+
+* gh-101144: Honor ``encoding`` as positional parameter
+  to ``Path.open()`` and ``Path.read_text()``.
+
 v3.11.0
 =======
 
