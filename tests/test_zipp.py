@@ -6,7 +6,7 @@ import tempfile
 import shutil
 import pickle
 import string
-from test.support.script_helper import assert_python_ok
+import sys
 import unittest
 import zipfile
 
@@ -186,25 +186,21 @@ class TestPath(unittest.TestCase):
             with self.assertRaises(UnicodeDecodeError):
                 f.read()
 
-    def test_encoding_warnings(self):
+    @unittest.skipIf(
+        not sys.flags.warn_default_encoding,
+        "Requires warn_default_encoding",
+    )
+    @pass_alpharep
+    def test_encoding_warnings(self, alpharep):
         """EncodingWarning must blame the read_text and open calls."""
-        code = '''\
-import io, zipfile
-import zipp
-with zipfile.ZipFile(io.BytesIO(), "w") as zf:
-    zf.filename = '<test_encoding_warnings in memory zip file>'
-    zf.writestr("path/file.txt", b"Spanish Inquisition")
-    root = zipp.Path(zf)
-    (path,) = root.iterdir()
-    file_path = path.joinpath("file.txt")
-    unused = file_path.read_text()  # should warn
-    file_path.open("r").close()  # should warn
-'''
-        proc = assert_python_ok('-X', 'warn_default_encoding', '-c', code)
-        warnings = proc.err.splitlines()
-        self.assertEqual(len(warnings), 2, proc.err)
-        self.assertRegex(warnings[0], rb"^<string>:\d+: EncodingWarning:")
-        self.assertRegex(warnings[1], rb"^<string>:\d+: EncodingWarning:")
+        assert sys.flags.warn_default_encoding
+        root = zipp.Path(alpharep)
+        with self.assertWarns(EncodingWarning) as wc:
+            root.joinpath("a.txt").read_text()
+        assert __file__ == wc.filename
+        with self.assertWarns(EncodingWarning) as wc:
+            root.joinpath("a.txt").open("r").close()
+        assert __file__ == wc.filename
 
     def test_open_write(self):
         """
