@@ -187,7 +187,7 @@ class TestPath(unittest.TestCase):
                 f.read()
 
     @unittest.skipIf(
-        not sys.flags.warn_default_encoding,
+        not getattr(sys.flags, 'warn_default_encoding', 0),
         "Requires warn_default_encoding",
     )
     @pass_alpharep
