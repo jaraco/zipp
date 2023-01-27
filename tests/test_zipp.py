@@ -242,7 +242,8 @@ class TestPath(unittest.TestCase):
         root = zipp.Path(alpharep)
         a, b, g = root.iterdir()
         assert a.read_text(encoding="utf-8") == "content of a"
-        a.read_text("utf-8")  # No positional arg TypeError per gh-101144.
+        # Also check positional encoding arg (gh-101144).
+        assert a.read_text("utf-8") == "content of a"
         assert a.read_bytes() == b"content of a"
 
     @pass_alpharep
