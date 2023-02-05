@@ -1,3 +1,9 @@
+v3.12.1
+=======
+
+* gh-101566: In ``CompleteDirs``, override ``ZipFile.getinfo``
+  to supply a ``ZipInfo`` for implied dirs.
+
 v3.12.0
 =======
 
