@@ -41,7 +41,9 @@ were contributed to different versions in the standard library:
      - 3.12
    * - 3.5
      - 3.11
-   * - 3.3
+   * - 3.2
+     - 3.10
+   * - 3.3 ??
      - 3.9
    * - 1.0
      - 3.8
