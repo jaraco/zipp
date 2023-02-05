@@ -538,7 +538,6 @@ class TestPath(unittest.TestCase):
         """
         A zip file wrapped in a Path should extract even with implied dirs.
         """
-        self.skipTest("Fails due to python-101566")
         source_path = self.zipfile_ondisk(alpharep)
         zf = zipfile.ZipFile(source_path)
         # wrap the zipfile for its side effect
