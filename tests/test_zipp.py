@@ -11,12 +11,12 @@ import unittest
 import zipfile
 
 import jaraco.itertools
-import func_timeout
 from jaraco.functools import compose
 
 import zipp
 
 from ._test_params import parameterize, Invoked
+from ._func_timeout_compat import set_timeout
 
 
 consume = tuple
@@ -349,7 +349,7 @@ class TestPath(unittest.TestCase):
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
 
-    @func_timeout.func_set_timeout(3)
+    @set_timeout(3)
     def test_implied_dirs_performance(self):
         data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
         zipp.CompleteDirs._implied_dirs(data)

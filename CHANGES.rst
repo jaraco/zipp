@@ -1,3 +1,8 @@
+v3.13.0
+=======
+
+* In tests, add a fallback when ``func_timeout`` isn't available.
+
 v3.12.1
 =======
 
