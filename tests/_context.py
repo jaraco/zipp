@@ -11,8 +11,8 @@ class TimedContext(contextlib.ContextDecorator):
     A context that will raise DeadlineExceeded if the
     max duration is reached during the execution.
 
-    >>> TimedContext(1)(time.sleep)(.01)
-    >>> TimedContext(0)(time.sleep)(.01)
+    >>> TimedContext(1)(time.sleep)(.1)
+    >>> TimedContext(0)(time.sleep)(.1)
     Traceback (most recent call last):
     ...
     tests._context.DeadlineExceeded: (..., 0)
