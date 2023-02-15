@@ -97,7 +97,7 @@ class CompleteDirs(InitializedState, zipfile.ZipFile):
         return _dedupe(_difference(as_dirs, names))
 
     def namelist(self):
-        names = super(CompleteDirs, self).namelist()
+        names = super().namelist()
         return names + list(self._implied_dirs(names))
 
     def _name_set(self):
@@ -118,7 +118,7 @@ class CompleteDirs(InitializedState, zipfile.ZipFile):
         Supplement getinfo for implied dirs.
         """
         try:
-            return super(CompleteDirs, self).getinfo(name)
+            return super().getinfo(name)
         except KeyError:
             if not name.endswith('/') or name not in self._name_set():
                 raise
@@ -153,13 +153,13 @@ class FastLookup(CompleteDirs):
     def namelist(self):
         with contextlib.suppress(AttributeError):
             return self.__names
-        self.__names = super(FastLookup, self).namelist()
+        self.__names = super().namelist()
         return self.__names
 
     def _name_set(self):
         with contextlib.suppress(AttributeError):
             return self.__lookup
-        self.__lookup = super(FastLookup, self)._name_set()
+        self.__lookup = super()._name_set()
         return self.__lookup
 
 
@@ -360,7 +360,7 @@ class Path:
 
     def glob(self, pattern):
         if not pattern:
-            raise ValueError("Unacceptable pattern: {!r}".format(pattern))
+            raise ValueError(f"Unacceptable pattern: {pattern!r}")
 
         matches = re.compile(fnmatch.translate(pattern)).fullmatch
         return (
