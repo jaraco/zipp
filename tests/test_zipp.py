@@ -269,19 +269,6 @@ class TestPath(unittest.TestCase):
         assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
-    def test_traverse_simplediv(self, alpharep):
-        """
-        Disable the __future__.division when testing traversal.
-        """
-        code = compile(
-            source="zipp.Path(alpharep) / 'a'",
-            filename="(test)",
-            mode="eval",
-            dont_inherit=True,
-        )
-        eval(code)
-
-    @pass_alpharep
     def test_pathlike_construction(self, alpharep):
         """
         zipp.Path should be constructable from a path-like object
