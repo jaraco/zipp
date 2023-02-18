@@ -1,3 +1,8 @@
+v3.14.0
+=======
+
+* Minor cleanup in tests, including #93.
+
 v3.13.0
 =======
 
