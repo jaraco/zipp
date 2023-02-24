@@ -11,12 +11,12 @@ import unittest
 import zipfile
 
 import jaraco.itertools
+import jaraco.test.complexity
 from jaraco.functools import compose
 
 import zipp
 
 from ._test_params import parameterize, Invoked
-from ._func_timeout_compat import set_timeout
 
 
 consume = tuple
@@ -336,10 +336,13 @@ class TestPath(unittest.TestCase):
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
 
-    @set_timeout(3)
     def test_implied_dirs_performance(self):
-        data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
-        consume(zipp.CompleteDirs._implied_dirs(data))
+        assert is_linear_time(
+            compose(consume, zipp.CompleteDirs._implied_dirs),
+            factory=lambda size: [
+                '/'.join(string.ascii_lowercase + str(n)) for n in range(size)
+            ],
+        )
 
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
