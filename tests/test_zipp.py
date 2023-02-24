@@ -339,7 +339,7 @@ class TestPath(unittest.TestCase):
     @set_timeout(3)
     def test_implied_dirs_performance(self):
         data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
-        zipp.CompleteDirs._implied_dirs(data)
+        consume(zipp.CompleteDirs._implied_dirs(data))
 
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
