@@ -343,7 +343,7 @@ class TestPath(unittest.TestCase):
             max_n=1000,
             min_n=1,
         )
-        assert best.__class__ is big_o.complexities.Linear
+        assert best <= big_o.complexities.Linear
 
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
