@@ -518,7 +518,7 @@ class TestPath(unittest.TestCase):
         saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk, at=subpath))
         restored_1 = pickle.loads(saved_1)
         first, *rest = restored_1.iterdir()
-        assert first.read_text().startswith('content of ')
+        assert first.read_text(encoding='utf-8').startswith('content of ')
 
     @pass_alpharep
     def test_extract_orig_with_implied_dirs(self, alpharep):
