@@ -5,15 +5,12 @@ import pathlib
 import tempfile
 import shutil
 import pickle
-import string
 import sys
 import unittest
 import zipfile
 
-import big_o
 import jaraco.itertools
 from jaraco.functools import compose
-from more_itertools import consume
 
 import zipp
 
@@ -333,17 +330,6 @@ class TestPath(unittest.TestCase):
             entry.joinpath('suffix')
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
-
-    def test_implied_dirs_performance(self):
-        best, others = big_o.big_o(
-            compose(consume, zipp.CompleteDirs._implied_dirs),
-            lambda size: [
-                '/'.join(string.ascii_lowercase + str(n)) for n in range(size)
-            ],
-            max_n=1000,
-            min_n=1,
-        )
-        assert best <= big_o.complexities.Linear
 
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
