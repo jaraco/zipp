@@ -1,3 +1,9 @@
+v3.15.0
+=======
+
+* gh-102209: ``test_implied_dirs_performance`` now tests
+  measures the time complexity experimentally.
+
 v3.14.0
 =======
 
