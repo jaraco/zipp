@@ -222,7 +222,7 @@ class Path:
 
     Read text:
 
-    >>> c.read_text()
+    >>> c.read_text(encoding='utf-8')
     'content of c'
 
     existence:
