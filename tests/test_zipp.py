@@ -12,14 +12,12 @@ import zipfile
 
 import jaraco.itertools
 from jaraco.functools import compose
+from more_itertools import consume
 
 import zipp
 
 from ._test_params import parameterize, Invoked
 from ._func_timeout_compat import set_timeout
-
-
-consume = tuple
 
 
 def add_dirs(zf):
