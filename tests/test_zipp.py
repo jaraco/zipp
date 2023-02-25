@@ -530,3 +530,12 @@ class TestPath(unittest.TestCase):
         # wrap the zipfile for its side effect
         zipp.Path(zf)
         zf.extractall(source_path.parent)
+
+    @pass_alpharep
+    def test_getinfo_missing(self, alpharep):
+        """
+        Validate behavior of getinfo on original zipfile after wrapping.
+        """
+        zipp.Path(alpharep)
+        with self.assertRaises(KeyError):
+            alpharep.getinfo('does-not-exist')
