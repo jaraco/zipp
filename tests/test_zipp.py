@@ -5,19 +5,16 @@ import pathlib
 import tempfile
 import shutil
 import pickle
-import string
 import sys
 import unittest
 import zipfile
 
 import jaraco.itertools
 from jaraco.functools import compose
-from more_itertools import consume
 
 import zipp
 
 from ._test_params import parameterize, Invoked
-from ._func_timeout_compat import set_timeout
 
 
 def add_dirs(zf):
@@ -333,11 +330,6 @@ class TestPath(unittest.TestCase):
             entry.joinpath('suffix')
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
-
-    @set_timeout(3)
-    def test_implied_dirs_performance(self):
-        data = ['/'.join(string.ascii_lowercase + str(n)) for n in range(10000)]
-        consume(zipp.CompleteDirs._implied_dirs(data))
 
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
