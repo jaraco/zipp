@@ -455,6 +455,9 @@ class TestPath(unittest.TestCase):
         root = zipp.Path(alpharep)
         assert not root.match("*.txt")
 
+        assert list(root.glob("*/i.txt")) == []
+        assert list(root.rglob("*/i.txt")) == [zipp.Path(alpharep, "g/h/i.txt")]
+
         assert list(root.glob("b/c.*")) == [zipp.Path(alpharep, "b/c.txt")]
 
         files = root.glob("**/*.txt")
