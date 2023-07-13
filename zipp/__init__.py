@@ -5,9 +5,9 @@ import itertools
 import contextlib
 import pathlib
 import re
-import fnmatch
 
 from .py310compat import text_encoding
+from .glob import translate
 
 
 __all__ = ['Path']
@@ -367,7 +367,7 @@ class Path:
         if not pattern:
             raise ValueError(f"Unacceptable pattern: {pattern!r}")
 
-        matches = re.compile(fnmatch.translate(pattern)).fullmatch
+        matches = re.compile(translate(pattern)).fullmatch
         return (
             child
             for child in self._descendants()
