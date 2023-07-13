@@ -349,7 +349,7 @@ class Path:
         return filter(self._is_child, subs)
 
     def match(self, path_pattern):
-        return pathlib.Path(self.at).match(path_pattern)
+        return pathlib.PurePosixPath(self.at).match(path_pattern)
 
     def is_symlink(self):
         """
