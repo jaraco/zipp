@@ -1,1 +1,0 @@
-Replaced the ``fnmatch.translate`` with a fresh glob-to-regex translator for more correct matching behavior.

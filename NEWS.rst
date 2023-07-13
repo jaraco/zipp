@@ -1,3 +1,12 @@
+v3.16.1
+=======
+
+Bugfixes
+--------
+
+- Replaced the ``fnmatch.translate`` with a fresh glob-to-regex translator for more correct matching behavior. (#98)
+
+
 v3.16.0
 =======
 
