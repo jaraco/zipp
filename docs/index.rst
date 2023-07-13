@@ -18,6 +18,11 @@ Welcome to |project| documentation!
     :undoc-members:
     :show-inheritance:
 
+.. automodule:: zipp.glob
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 
 Indices and tables
 ==================

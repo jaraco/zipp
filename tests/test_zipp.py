@@ -455,15 +455,49 @@ class TestPath(unittest.TestCase):
         root = zipp.Path(alpharep)
         assert not root.match("*.txt")
 
-        assert list(root.glob("*/i.txt")) == []
-        assert list(root.rglob("*/i.txt")) == [zipp.Path(alpharep, "g/h/i.txt")]
-
         assert list(root.glob("b/c.*")) == [zipp.Path(alpharep, "b/c.txt")]
+        assert list(root.glob("b/*.txt")) == [
+            zipp.Path(alpharep, "b/c.txt"),
+            zipp.Path(alpharep, "b/f.txt"),
+        ]
 
+    @pass_alpharep
+    def test_glob_recursive(self, alpharep):
+        root = zipp.Path(alpharep)
         files = root.glob("**/*.txt")
         assert all(each.match("*.txt") for each in files)
 
         assert list(root.glob("**/*.txt")) == list(root.rglob("*.txt"))
+
+    @pass_alpharep
+    def test_glob_subdirs(self, alpharep):
+        root = zipp.Path(alpharep)
+
+        assert list(root.glob("*/i.txt")) == []
+        assert list(root.rglob("*/i.txt")) == [zipp.Path(alpharep, "g/h/i.txt")]
+
+    @pass_alpharep
+    def test_glob_does_not_overmatch_dot(self, alpharep):
+        root = zipp.Path(alpharep)
+
+        assert list(root.glob("*.xt")) == []
+
+    @pass_alpharep
+    def test_glob_single_char(self, alpharep):
+        root = zipp.Path(alpharep)
+
+        assert list(root.glob("a?txt")) == [zipp.Path(alpharep, "a.txt")]
+        assert list(root.glob("a[.]txt")) == [zipp.Path(alpharep, "a.txt")]
+        assert list(root.glob("a[?]txt")) == []
+
+    @pass_alpharep
+    def test_glob_chars(self, alpharep):
+        root = zipp.Path(alpharep)
+
+        assert list(root.glob("j/?.b[ai][nz]")) == [
+            zipp.Path(alpharep, "j/k.bin"),
+            zipp.Path(alpharep, "j/l.baz"),
+        ]
 
     def test_glob_empty(self):
         root = zipp.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
