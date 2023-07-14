@@ -1,3 +1,14 @@
+v3.16.2
+=======
+
+Bugfixes
+--------
+
+- In ``Path.match``, Windows path separators are no longer honored. The fact that they were was incidental and never supported. (#92)
+- Fixed name/suffix/suffixes/stem operations when no filename is present and the Path is not at the root of the zipfile. (#96)
+- Reworked glob utilizing the namelist directly. (#101)
+
+
 v3.16.1
 =======
 

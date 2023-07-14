@@ -1,1 +1,0 @@
-In ``Path.match``, Windows path separators are no longer honored. The fact that they were was incidental and never supported.
