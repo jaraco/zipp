@@ -425,6 +425,8 @@ class TestPath(unittest.TestCase):
         d = root / "d"
         assert d.stem == "d"
 
+        assert (root / ".gitignore").stem == ".gitignore"
+
     @pass_alpharep
     def test_root_parent(self, alpharep):
         root = zipp.Path(alpharep)
