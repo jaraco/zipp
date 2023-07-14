@@ -1,4 +1,4 @@
-from . import test_zipp
+from . import test_path
 
 
-__name__ == '__main__' and test_zipp.build_alpharep_fixture().extractall('alpharep')
+__name__ == '__main__' and test_path.build_alpharep_fixture().extractall('alpharep')
