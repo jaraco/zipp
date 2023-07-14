@@ -6,7 +6,6 @@ import string
 import unittest
 import zipfile
 
-import pytest
 import zipp
 from jaraco.functools import compose
 from more_itertools import consume
@@ -15,6 +14,7 @@ from ._support import import_or_skip
 
 
 big_o = import_or_skip('big_o')
+pytest = import_or_skip('pytest')
 
 
 class TestComplexity(unittest.TestCase):
