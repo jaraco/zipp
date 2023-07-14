@@ -56,6 +56,10 @@ jobs:
           platform: ubuntu-latest
         - python: pypy3.9
           platform: ubuntu-latest
+        exclude:
+        # disabled for numpy/numpy#23808
+        - python: "3.12"
+          platform: windows-latest
     runs-on: ${{ matrix.platform }}
     continue-on-error: ${{ matrix.python == '3.12' }}
     steps:
