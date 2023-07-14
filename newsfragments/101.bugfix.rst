@@ -1,0 +1,1 @@
+Reworked glob utilizing the namelist directly.
