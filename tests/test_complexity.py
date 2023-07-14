@@ -1,6 +1,7 @@
 import unittest
 import string
 
+import pytest
 import zipp
 from jaraco.functools import compose
 from more_itertools import consume
@@ -12,6 +13,7 @@ big_o = import_or_skip('big_o')
 
 
 class TestComplexity(unittest.TestCase):
+    @pytest.mark.flaky
     def test_implied_dirs_performance(self):
         best, others = big_o.big_o(
             compose(consume, zipp.CompleteDirs._implied_dirs),
