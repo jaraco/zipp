@@ -1,0 +1,1 @@
+Fixed name/suffix/suffixes/stem operations when no filename is present and the Path is not at the root of the zipfile.

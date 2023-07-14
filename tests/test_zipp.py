@@ -408,9 +408,6 @@ class TestPath(unittest.TestCase):
         e = root / '.hgrc'
         assert e.suffixes == []
 
-    import pytest
-
-    @pytest.mark.xfail(reason="96")
     @pass_alpharep
     def test_suffix_no_filename(self, alpharep):
         alpharep.filename = None
