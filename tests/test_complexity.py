@@ -81,8 +81,6 @@ class TestComplexity(unittest.TestCase):
             max_n=100,
             min_n=1,
         )
-        # TODO: why is this operation quadratic when the baseline regex
-        # complexity is constant?
         assert best <= big_o.complexities.Quadratic
 
     @pytest.mark.flaky
