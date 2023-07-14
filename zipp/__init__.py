@@ -357,22 +357,13 @@ class Path:
         """
         return False
 
-    def _descendants(self):
-        for child in self.iterdir():
-            yield child
-            if child.is_dir():
-                yield from child._descendants()
-
     def glob(self, pattern):
         if not pattern:
             raise ValueError(f"Unacceptable pattern: {pattern!r}")
 
-        matches = re.compile(translate(pattern)).fullmatch
-        return (
-            child
-            for child in self._descendants()
-            if matches(str(child.relative_to(self)))
-        )
+        prefix = re.escape(self.at)
+        matches = re.compile(prefix + translate(pattern)).fullmatch
+        return map(self._next, filter(matches, self.root.namelist()))
 
     def rglob(self, pattern):
         return self.glob(f'**/{pattern}')

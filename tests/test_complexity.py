@@ -73,7 +73,7 @@ class TestComplexity(unittest.TestCase):
         )
         assert best <= big_o.complexities.Constant
 
-    @pytest.mark.xfail(reason="101")
+    @pytest.mark.flaky
     def test_glob_depth(self):
         best, others = big_o.big_o(
             lambda path: consume(path.glob('*.txt')),
@@ -85,7 +85,7 @@ class TestComplexity(unittest.TestCase):
         # complexity is constant?
         assert best <= big_o.complexities.Quadratic
 
-    @pytest.mark.xfail(reason="101")
+    @pytest.mark.flaky
     def test_glob_width(self):
         best, others = big_o.big_o(
             lambda path: consume(path.glob('*.txt')),
@@ -95,7 +95,7 @@ class TestComplexity(unittest.TestCase):
         )
         assert best <= big_o.complexities.Linear
 
-    @pytest.mark.xfail(reason="101")
+    @pytest.mark.flaky
     def test_glob_width_and_depth(self):
         best, others = big_o.big_o(
             lambda path: consume(path.glob('*.txt')),
