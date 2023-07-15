@@ -195,13 +195,13 @@ class Path:
 
     Path accepts the zipfile object itself or a filename
 
-    >>> root = Path(zf)
+    >>> path = Path(zf)
 
     From there, several path operations are available.
 
     Directory iteration (including the zip file itself):
 
-    >>> a, b = root.iterdir()
+    >>> a, b = path.iterdir()
     >>> a
     Path('mem/abcde.zip', 'a.txt')
     >>> b
@@ -239,16 +239,38 @@ class Path:
     'mem/abcde.zip/b/c.txt'
 
     At the root, ``name``, ``filename``, and ``parent``
-    resolve to the zipfile. Note these attributes are not
-    valid and will raise a ``ValueError`` if the zipfile
-    has no filename.
+    resolve to the zipfile.
 
-    >>> root.name
+    >>> str(path)
+    'mem/abcde.zip/'
+    >>> path.name
     'abcde.zip'
-    >>> str(root.filename).replace(os.sep, posixpath.sep)
-    'mem/abcde.zip'
-    >>> str(root.parent)
+    >>> path.filename == pathlib.Path('mem/abcde.zip')
+    True
+    >>> str(path.parent)
     'mem'
+
+    If the zipfile has no filename, such attribtues are not
+    valid and accessing them will raise an Exception.
+
+    >>> zf.filename = None
+    >>> path.name
+    Traceback (most recent call last):
+    ...
+    TypeError: ...
+
+    >>> path.filename
+    Traceback (most recent call last):
+    ...
+    TypeError: ...
+
+    >>> path.parent
+    Traceback (most recent call last):
+    ...
+    TypeError: ...
+
+    # workaround python/cpython#106763
+    >>> pass
     """
 
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
