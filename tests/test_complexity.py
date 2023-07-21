@@ -96,8 +96,11 @@ class TestComplexity(unittest.TestCase):
     def test_glob_width_and_depth(self):
         best, others = big_o.big_o(
             lambda path: consume(path.glob('*.txt')),
-            lambda size: self.make_zip_path(depth=size, width=size),
-            max_n=10,
+            lambda size: self.make_zip_path(
+                depth=int(math.sqrt(size)),
+                width=int(math.sqrt(size)),
+            ),
+            max_n=100,
             min_n=1,
             n_repeats=3,
         )
