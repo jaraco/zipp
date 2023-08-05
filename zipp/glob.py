@@ -2,14 +2,33 @@ import re
 
 
 def translate(pattern):
+    """
+    Given a glob pattern, produce a regex that matches it.
+    """
+    return extend(translate_core(pattern))
+
+
+def extend(pattern):
+    r"""
+    Extend regex for pattern-wide concerns.
+
+    Apply '(?s:)' to create a non-matching group that
+    matches newlines (valid on Unix).
+
+    Append '\Z' to imply fullmatch even when match is used.
+    """
+    return rf'(?s:{pattern})\Z'
+
+
+def translate_core(pattern):
     r"""
     Given a glob pattern, produce a regex that matches it.
 
-    >>> translate('*.txt')
+    >>> translate_core('*.txt')
     '[^/]*\\.txt'
-    >>> translate('a?txt')
+    >>> translate_core('a?txt')
     'a[^/]txt'
-    >>> translate('**/*')
+    >>> translate_core('**/*')
     '.*/[^/]*'
     """
     return ''.join(map(replace, separate(pattern)))
