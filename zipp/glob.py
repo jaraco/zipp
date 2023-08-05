@@ -8,7 +8,7 @@ def translate(pattern):
     >>> translate('*.txt')
     '[^/]*\\.txt'
     >>> translate('a?txt')
-    'a.txt'
+    'a[^/]txt'
     >>> translate('**/*')
     '.*/[^/]*'
     """
@@ -36,5 +36,5 @@ def replace(match):
         re.escape(match.group(0))
         .replace('\\*\\*', r'.*')
         .replace('\\*', r'[^/]*')
-        .replace('\\?', r'.')
+        .replace('\\?', r'[^/]')
     )
