@@ -41,6 +41,7 @@ class Translator:
         >>> t.translate_core('**/*').replace('\\\\', '')
         '.*/[^/]*'
         """
+        self.restrict_rglob(pattern)
         return ''.join(map(self.replace, separate(pattern)))
 
     def replace(self, match):
@@ -53,6 +54,19 @@ class Translator:
             .replace('\\*', rf'[^{re.escape(self.seps)}]*')
             .replace('\\?', r'[^/]')
         )
+
+    def restrict_rglob(self, pattern):
+        """
+        Raise ValueError if ** appears in anything but a full path segment.
+
+        >>> Translator().translate('**foo')
+        Traceback (most recent call last):
+        ...
+        ValueError: ** must appear alone in a path segment
+        """
+        segments = re.split(rf'[{re.escape(self.seps)}]+', pattern)
+        if any('**' in segment and segment != '**' for segment in segments):
+            raise ValueError("** must appear alone in a path segment")
 
 
 def separate(pattern):
