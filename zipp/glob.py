@@ -39,10 +39,10 @@ class Translator:
         >>> t.translate_core('a?txt')
         'a[^/]txt'
         >>> t.translate_core('**/*').replace('\\\\', '')
-        '.*/[^/]*'
+        '.*/[^/][^/]*'
         """
         self.restrict_rglob(pattern)
-        return ''.join(map(self.replace, separate(pattern)))
+        return ''.join(map(self.replace, separate(self.star_not_empty(pattern))))
 
     def replace(self, match):
         """
@@ -64,9 +64,22 @@ class Translator:
         ...
         ValueError: ** must appear alone in a path segment
         """
-        segments = re.split(rf'[{re.escape(self.seps)}]+', pattern)
+        seps_pattern = rf'[{re.escape(self.seps)}]+'
+        segments = re.split(seps_pattern, pattern)
         if any('**' in segment and segment != '**' for segment in segments):
             raise ValueError("** must appear alone in a path segment")
+
+    def star_not_empty(self, pattern):
+        """
+        Ensure that * will not match an empty segment.
+        """
+
+        def handle_segment(match):
+            segment = match.group(0)
+            return '?*' if segment == '*' else segment
+
+        not_seps_pattern = rf'[^{re.escape(self.seps)}]+'
+        return re.sub(not_seps_pattern, handle_segment, pattern)
 
 
 def separate(pattern):
