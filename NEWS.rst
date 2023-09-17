@@ -1,3 +1,18 @@
+v3.17.0
+=======
+
+Features
+--------
+
+- Added ``CompleteDirs.inject`` classmethod to make available for use elsewhere.
+
+
+Bugfixes
+--------
+
+- Avoid matching path separators for '?' in glob.
+
+
 v3.16.2
 =======
 

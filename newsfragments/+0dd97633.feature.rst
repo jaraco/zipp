@@ -1,1 +1,0 @@
-Added ``CompleteDirs.inject`` classmethod to make available for use elsewhere.
