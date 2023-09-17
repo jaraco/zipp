@@ -17,16 +17,6 @@ import zipp
 from ._test_params import parameterize, Invoked
 
 
-def add_dirs(zf):
-    """
-    Given a writable zip file zf, inject directory entries for
-    any directories implied by the presence of children.
-    """
-    for name in zipp.CompleteDirs._implied_dirs(zf.namelist()):
-        zf.writestr(name, b"")
-    return zf
-
-
 def build_alpharep_fixture():
     """
     Create a zip file with this structure:
@@ -82,7 +72,7 @@ def temp_dir():
 
 alpharep_generators = [
     Invoked.wrap(build_alpharep_fixture),
-    Invoked.wrap(compose(add_dirs, build_alpharep_fixture)),
+    Invoked.wrap(compose(zipp.CompleteDirs.inject, build_alpharep_fixture)),
 ]
 
 pass_alpharep = parameterize(['alpharep'], alpharep_generators)

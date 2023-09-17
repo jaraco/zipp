@@ -148,6 +148,16 @@ class CompleteDirs(InitializedState, zipfile.ZipFile):
         source.__class__ = cls
         return source
 
+    @classmethod
+    def inject(cls, zf: zipfile.ZipFile) -> zipfile.ZipFile:
+        """
+        Given a writable zip file zf, inject directory entries for
+        any directories implied by the presence of children.
+        """
+        for name in cls._implied_dirs(zf.namelist()):
+            zf.writestr(name, b"")
+        return zf
+
 
 class FastLookup(CompleteDirs):
     """
