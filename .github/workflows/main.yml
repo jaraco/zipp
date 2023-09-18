@@ -130,6 +130,9 @@ jobs:
       - name: Install tox
         run: |
           python -m pip install tox
+      - name: Emit tox config
+        run:
+          tox config -e release
       - name: Run
         run:
           tox -e release
