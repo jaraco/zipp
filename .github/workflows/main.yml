@@ -60,7 +60,9 @@ jobs:
         run: |
           python -m pip install tox
       - name: Emit tox config
-        run: tox config
+        run:
+          env
+          tox config
       - name: Run
         run: tox
 
