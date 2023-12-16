@@ -10,7 +10,7 @@ class Translator:
 
     def __init__(self, seps: str = _default_seps):
         assert seps in ('/', '\\', '\\/')
-        self.seps = _default_seps
+        self.seps = seps
 
     def translate(self, pattern):
         """
