@@ -7,7 +7,7 @@ import pathlib
 import re
 
 from .py310compat import text_encoding
-from .glob import translate
+from .glob import Translator
 
 
 __all__ = ['Path']
@@ -397,7 +397,8 @@ class Path:
             raise ValueError(f"Unacceptable pattern: {pattern!r}")
 
         prefix = re.escape(self.at)
-        matches = re.compile(prefix + translate(pattern)).fullmatch
+        tr = Translator(seps='/')
+        matches = re.compile(prefix + tr.translate(pattern)).fullmatch
         return map(self._next, filter(matches, self.root.namelist()))
 
     def rglob(self, pattern):
