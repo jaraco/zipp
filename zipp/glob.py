@@ -6,10 +6,22 @@ _default_seps = os.sep + str(os.altsep) * bool(os.altsep)
 
 
 class Translator:
+    """
+    >>> Translator('xyz')
+    Traceback (most recent call last):
+    ...
+    AssertionError: Invalid separators
+
+    >>> Translator('')
+    Traceback (most recent call last):
+    ...
+    AssertionError: Invalid separators
+    """
+
     seps: str
 
     def __init__(self, seps: str = _default_seps):
-        assert seps in ('/', '\\', '\\/')
+        assert seps and set(seps) <= set(_default_seps), "Invalid separators"
         self.seps = seps
 
     def translate(self, pattern):
