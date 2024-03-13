@@ -50,6 +50,8 @@ class TestComplexity(unittest.TestCase):
         ['a', 'b']
         >>> list(TestComplexity.make_names(30))
         ['aa', 'ab', ..., 'bd']
+        >>> list(TestComplexity.make_names(17124))
+        ['aaa', 'aab', ..., 'zip']
         """
         # determine how many products are needed to produce width
         n_products = max(1, math.ceil(math.log(width, len(letters))))
