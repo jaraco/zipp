@@ -1,1 +1,0 @@
-Refactored glob functionality to support a more generalized solution with support for platform-specific path separators.

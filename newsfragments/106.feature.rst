@@ -1,1 +1,0 @@
-Bypass ZipFile.namelist in glob for better performance.
