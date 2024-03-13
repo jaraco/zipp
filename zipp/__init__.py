@@ -5,6 +5,7 @@ import itertools
 import contextlib
 import pathlib
 import re
+import sys
 
 from .compat.py310 import text_encoding
 from .glob import Translator
@@ -179,8 +180,10 @@ class FastLookup(CompleteDirs):
 
 
 def _extract_text_encoding(encoding=None, *args, **kwargs):
-    # stacklevel=3 so that the caller of the caller see any warning.
-    return text_encoding(encoding, 3), args, kwargs
+    # compute stack level so that the caller of the caller sees any warning.
+    is_pypy = sys.implementation.name == 'pypy'
+    stack_level = 3 + is_pypy
+    return text_encoding(encoding, stack_level), args, kwargs
 
 
 class Path:
