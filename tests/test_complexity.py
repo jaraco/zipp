@@ -44,13 +44,15 @@ class TestComplexity(unittest.TestCase):
     @classmethod
     def make_names(cls, width, letters=string.ascii_lowercase):
         """
+        >>> list(TestComplexity.make_names(1))
+        ['a']
         >>> list(TestComplexity.make_names(2))
         ['a', 'b']
         >>> list(TestComplexity.make_names(30))
         ['aa', 'ab', ..., 'bd']
         """
         # determine how many products are needed to produce width
-        n_products = math.ceil(math.log(width, len(letters)))
+        n_products = max(1, math.ceil(math.log(width, len(letters))))
         inputs = (letters,) * n_products
         combinations = itertools.product(*inputs)
         names = map(''.join, combinations)
