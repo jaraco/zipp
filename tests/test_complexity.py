@@ -85,7 +85,7 @@ class TestComplexity(unittest.TestCase):
             max_n=100,
             min_n=1,
         )
-        assert best <= big_o.complexities.Quadratic
+        assert best <= big_o.complexities.Linear
 
     @pytest.mark.flaky
     def test_glob_width(self):
