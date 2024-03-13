@@ -6,7 +6,7 @@ import contextlib
 import pathlib
 import re
 
-from .py310compat import text_encoding
+from .compat.py310 import text_encoding
 from .glob import Translator
 
 
