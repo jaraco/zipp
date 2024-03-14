@@ -37,7 +37,9 @@ were contributed to different versions in the standard library:
 
    * - zipp
      - stdlib
-   * - 3.15
+   * - 3.18
+     - 3.13
+   * - 3.16
      - 3.12
    * - 3.5
      - 3.11
