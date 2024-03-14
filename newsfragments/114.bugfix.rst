@@ -1,1 +1,0 @@
-Add special accounting for pypy when computing the stack level for text encoding warnings.

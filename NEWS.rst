@@ -8,6 +8,12 @@ Features
 - Refactored glob functionality to support a more generalized solution with support for platform-specific path separators. (#108)
 
 
+Bugfixes
+--------
+
+- Add special accounting for pypy when computing the stack level for text encoding warnings. (#114)
+
+
 v3.17.0
 =======
 
