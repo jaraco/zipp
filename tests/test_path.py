@@ -2,14 +2,12 @@ import io
 import itertools
 import contextlib
 import pathlib
-import tempfile
-import shutil
 import pickle
 import sys
 import unittest
 import zipfile
 
-from .compat.py39.os_helper import FakePath
+from .compat.py39.os_helper import temp_dir, FakePath
 
 import jaraco.itertools
 from jaraco.functools import compose
@@ -61,15 +59,6 @@ def build_alpharep_fixture():
     zf.writestr("j/m.bar", b"content of m")
     zf.filename = "alpharep.zip"
     return zf
-
-
-@contextlib.contextmanager
-def temp_dir():
-    tmpdir = tempfile.mkdtemp()
-    try:
-        yield pathlib.Path(tmpdir)
-    finally:
-        shutil.rmtree(tmpdir)
 
 
 alpharep_generators = [
