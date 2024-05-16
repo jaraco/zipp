@@ -4,9 +4,8 @@ import math
 import re
 import string
 import unittest
-import zipfile
+from .compat.overlay import zipfile
 
-import zipp
 from jaraco.functools import compose
 from more_itertools import consume
 
@@ -21,7 +20,7 @@ class TestComplexity(unittest.TestCase):
     @pytest.mark.flaky
     def test_implied_dirs_performance(self):
         best, others = big_o.big_o(
-            compose(consume, zipp.CompleteDirs._implied_dirs),
+            compose(consume, zipfile._path.CompleteDirs._implied_dirs),
             lambda size: [
                 '/'.join(string.ascii_lowercase + str(n)) for n in range(size)
             ],
@@ -30,7 +29,7 @@ class TestComplexity(unittest.TestCase):
         )
         assert best <= big_o.complexities.Linear
 
-    def make_zip_path(self, depth=1, width=1) -> zipp.Path:
+    def make_zip_path(self, depth=1, width=1):
         """
         Construct a Path with width files at every level of depth.
         """
@@ -39,7 +38,7 @@ class TestComplexity(unittest.TestCase):
         for path, name in pairs:
             zf.writestr(f"{path}{name}.txt", b'')
         zf.filename = "big un.zip"
-        return zipp.Path(zf)
+        return zipfile.Path(zf)
 
     @classmethod
     def make_names(cls, width, letters=string.ascii_lowercase):

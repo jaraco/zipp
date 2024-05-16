@@ -5,14 +5,12 @@ import pathlib
 import pickle
 import sys
 import unittest
-import zipfile
+from .compat.overlay import zipfile
 
 from .compat.py39.os_helper import temp_dir, FakePath
 
 import jaraco.itertools
 from jaraco.functools import compose
-
-import zipp
 
 from ._test_params import parameterize, Invoked
 
@@ -63,7 +61,7 @@ def build_alpharep_fixture():
 
 alpharep_generators = [
     Invoked.wrap(build_alpharep_fixture),
-    Invoked.wrap(compose(zipp.CompleteDirs.inject, build_alpharep_fixture)),
+    Invoked.wrap(compose(zipfile._path.CompleteDirs.inject, build_alpharep_fixture)),
 ]
 
 pass_alpharep = parameterize(['alpharep'], alpharep_generators)
@@ -85,7 +83,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_iterdir_and_types(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.is_dir()
         a, b, g, j = root.iterdir()
         assert a.is_file()
@@ -101,19 +99,19 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_is_file_missing(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert not root.joinpath('missing.txt').is_file()
 
     @pass_alpharep
     def test_iterdir_on_file(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         a, b, g, j = root.iterdir()
         with self.assertRaises(ValueError):
             a.iterdir()
 
     @pass_alpharep
     def test_subdir_is_dir(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert (root / 'b').is_dir()
         assert (root / 'b/').is_dir()
         assert (root / 'g').is_dir()
@@ -121,7 +119,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_open(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         a, b, g, j = root.iterdir()
         with a.open(encoding="utf-8") as strm:
             data = strm.read()
@@ -135,7 +133,7 @@ class TestPath(unittest.TestCase):
         zf = zipfile.ZipFile(in_memory_file, "w")
         zf.writestr("path/16.txt", "This was utf-16".encode("utf-16"))
         zf.filename = "test_open_utf16.zip"
-        root = zipp.Path(zf)
+        root = zipfile.Path(zf)
         (path,) = root.iterdir()
         u16 = path.joinpath("16.txt")
         with u16.open('r', "utf-16") as strm:
@@ -150,7 +148,7 @@ class TestPath(unittest.TestCase):
         zf = zipfile.ZipFile(in_memory_file, "w")
         zf.writestr("path/bad-utf8.bin", b"invalid utf-8: \xff\xff.")
         zf.filename = "test_read_text_encoding_errors.zip"
-        root = zipp.Path(zf)
+        root = zipfile.Path(zf)
         (path,) = root.iterdir()
         u16 = path.joinpath("bad-utf8.bin")
 
@@ -178,7 +176,7 @@ class TestPath(unittest.TestCase):
     def test_encoding_warnings(self, alpharep):
         """EncodingWarning must blame the read_text and open calls."""
         assert sys.flags.warn_default_encoding
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         with self.assertWarns(EncodingWarning) as wc:
             root.joinpath("a.txt").read_text()
         assert __file__ == wc.filename
@@ -191,7 +189,7 @@ class TestPath(unittest.TestCase):
         If the zipfile is open for write, it should be possible to
         write bytes or text to it.
         """
-        zf = zipp.Path(zipfile.ZipFile(io.BytesIO(), mode='w'))
+        zf = zipfile.Path(zipfile.ZipFile(io.BytesIO(), mode='w'))
         with zf.joinpath('file.bin').open('wb') as strm:
             strm.write(b'binary contents')
         with zf.joinpath('file.txt').open('w', encoding="utf-8") as strm:
@@ -202,13 +200,13 @@ class TestPath(unittest.TestCase):
         """
         Attempting to open a directory raises IsADirectoryError.
         """
-        zf = zipp.Path(alpharep)
+        zf = zipfile.Path(alpharep)
         with self.assertRaises(IsADirectoryError):
             zf.joinpath('b').open()
 
     @pass_alpharep
     def test_open_binary_invalid_args(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         with self.assertRaises(ValueError):
             root.joinpath('a.txt').open('rb', encoding='utf-8')
         with self.assertRaises(ValueError):
@@ -219,13 +217,13 @@ class TestPath(unittest.TestCase):
         """
         Attempting to open a missing directory raises FileNotFoundError.
         """
-        zf = zipp.Path(alpharep)
+        zf = zipfile.Path(alpharep)
         with self.assertRaises(FileNotFoundError):
             zf.joinpath('z').open()
 
     @pass_alpharep
     def test_read(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         a, b, g, j = root.iterdir()
         assert a.read_text(encoding="utf-8") == "content of a"
         # Also check positional encoding arg (gh-101144).
@@ -234,7 +232,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_joinpath(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         a = root.joinpath("a.txt")
         assert a.is_file()
         e = root.joinpath("b").joinpath("d").joinpath("e.txt")
@@ -242,13 +240,13 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_joinpath_multiple(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         e = root.joinpath("b", "d", "e.txt")
         assert e.read_text(encoding="utf-8") == "content of e"
 
     @pass_alpharep
     def test_traverse_truediv(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         a = root / "a.txt"
         assert a.is_file()
         e = root / "b" / "d" / "e.txt"
@@ -257,32 +255,32 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_pathlike_construction(self, alpharep):
         """
-        zipp.Path should be constructable from a path-like object
+        zipfile.Path should be constructable from a path-like object
         """
         zipfile_ondisk = self.zipfile_ondisk(alpharep)
         pathlike = FakePath(str(zipfile_ondisk))
-        zipp.Path(pathlike)
+        zipfile.Path(pathlike)
 
     @pass_alpharep
     def test_traverse_pathlike(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         root / FakePath("a")
 
     @pass_alpharep
     def test_parent(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert (root / 'a').parent.at == ''
         assert (root / 'a' / 'b').parent.at == 'a/'
 
     @pass_alpharep
     def test_dir_parent(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert (root / 'b').parent.at == ''
         assert (root / 'b/').parent.at == ''
 
     @pass_alpharep
     def test_missing_dir_parent(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert (root / 'missing dir/').parent.at == ''
 
     @pass_alpharep
@@ -291,7 +289,7 @@ class TestPath(unittest.TestCase):
         If the underlying zipfile is changed, the Path object should
         reflect that change.
         """
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         a, b, g, j = root.iterdir()
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
@@ -315,7 +313,7 @@ class TestPath(unittest.TestCase):
         """
         Ensure joinpath on items in zipfile is linear time.
         """
-        root = zipp.Path(self.huge_zipfile())
+        root = zipfile.Path(self.huge_zipfile())
         entries = jaraco.itertools.Counter(root.iterdir())
         for entry in entries:
             entry.joinpath('suffix')
@@ -327,11 +325,11 @@ class TestPath(unittest.TestCase):
         alpharep = self.zipfile_ondisk(alpharep)
         with zipfile.ZipFile(alpharep) as file:
             for rep in range(2):
-                zipp.Path(file, 'a.txt').read_text(encoding="utf-8")
+                zipfile.Path(file, 'a.txt').read_text(encoding="utf-8")
 
     @pass_alpharep
     def test_subclass(self, alpharep):
-        class Subclass(zipp.Path):
+        class Subclass(zipfile.Path):
             pass
 
         root = Subclass(alpharep)
@@ -339,7 +337,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_filename(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.filename == pathlib.Path('alpharep.zip')
 
     @pass_alpharep
@@ -347,7 +345,7 @@ class TestPath(unittest.TestCase):
         """
         The name of the root should be the name of the zipfile
         """
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.name == 'alpharep.zip' == root.filename.name
 
     @pass_alpharep
@@ -357,7 +355,7 @@ class TestPath(unittest.TestCase):
         The suffix of each nested file is the final component's last suffix, if any.
         Includes the leading period, just like pathlib.Path.
         """
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.suffix == '.zip' == root.filename.suffix
 
         b = root / "b.txt"
@@ -376,7 +374,7 @@ class TestPath(unittest.TestCase):
         The suffix of each nested file is the final component's last suffix, if any.
         Includes the leading period, just like pathlib.Path.
         """
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.suffixes == ['.zip'] == root.filename.suffixes
 
         b = root / 'b.txt'
@@ -394,7 +392,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_suffix_no_filename(self, alpharep):
         alpharep.filename = None
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.joinpath('example').suffix == ""
         assert root.joinpath('example').suffixes == []
 
@@ -403,7 +401,7 @@ class TestPath(unittest.TestCase):
         """
         The final path component, without its suffix
         """
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.stem == 'alpharep' == root.filename.stem
 
         b = root / "b.txt"
@@ -419,7 +417,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_root_parent(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root.parent == pathlib.Path('.')
         root.root.filename = 'foo/bar.zip'
         assert root.parent == pathlib.Path('foo')
@@ -431,7 +429,7 @@ class TestPath(unittest.TestCase):
         or parent of an unnamed zipfile.
         """
         alpharep.filename = None
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         with self.assertRaises(TypeError):
             root.name
         with self.assertRaises(TypeError):
@@ -444,18 +442,18 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_match_and_glob(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert not root.match("*.txt")
 
-        assert list(root.glob("b/c.*")) == [zipp.Path(alpharep, "b/c.txt")]
+        assert list(root.glob("b/c.*")) == [zipfile.Path(alpharep, "b/c.txt")]
         assert list(root.glob("b/*.txt")) == [
-            zipp.Path(alpharep, "b/c.txt"),
-            zipp.Path(alpharep, "b/f.txt"),
+            zipfile.Path(alpharep, "b/c.txt"),
+            zipfile.Path(alpharep, "b/f.txt"),
         ]
 
     @pass_alpharep
     def test_glob_recursive(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         files = root.glob("**/*.txt")
         assert all(each.match("*.txt") for each in files)
 
@@ -463,48 +461,48 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_glob_subdirs(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
 
         assert list(root.glob("*/i.txt")) == []
-        assert list(root.rglob("*/i.txt")) == [zipp.Path(alpharep, "g/h/i.txt")]
+        assert list(root.rglob("*/i.txt")) == [zipfile.Path(alpharep, "g/h/i.txt")]
 
     @pass_alpharep
     def test_glob_does_not_overmatch_dot(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
 
         assert list(root.glob("*.xt")) == []
 
     @pass_alpharep
     def test_glob_single_char(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
 
-        assert list(root.glob("a?txt")) == [zipp.Path(alpharep, "a.txt")]
-        assert list(root.glob("a[.]txt")) == [zipp.Path(alpharep, "a.txt")]
+        assert list(root.glob("a?txt")) == [zipfile.Path(alpharep, "a.txt")]
+        assert list(root.glob("a[.]txt")) == [zipfile.Path(alpharep, "a.txt")]
         assert list(root.glob("a[?]txt")) == []
 
     @pass_alpharep
     def test_glob_chars(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
 
         assert list(root.glob("j/?.b[ai][nz]")) == [
-            zipp.Path(alpharep, "j/k.bin"),
-            zipp.Path(alpharep, "j/l.baz"),
+            zipfile.Path(alpharep, "j/k.bin"),
+            zipfile.Path(alpharep, "j/l.baz"),
         ]
 
     def test_glob_empty(self):
-        root = zipp.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
+        root = zipfile.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
         with self.assertRaises(ValueError):
             root.glob('')
 
     @pass_alpharep
     def test_eq_hash(self, alpharep):
-        root = zipp.Path(alpharep)
-        assert root == zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
+        assert root == zipfile.Path(alpharep)
 
         assert root != (root / "a.txt")
         assert (root / "a.txt") == (root / "a.txt")
 
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert root in {root}
 
     @pass_alpharep
@@ -513,12 +511,12 @@ class TestPath(unittest.TestCase):
         See python/cpython#82102 for symlink support beyond this object.
         """
 
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         assert not root.is_symlink()
 
     @pass_alpharep
     def test_relative_to(self, alpharep):
-        root = zipp.Path(alpharep)
+        root = zipfile.Path(alpharep)
         relative = root.joinpath("b", "c.txt").relative_to(root / "b")
         assert str(relative) == "c.txt"
 
@@ -527,7 +525,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_inheritance(self, alpharep):
-        cls = type('PathChild', (zipp.Path,), {})
+        cls = type('PathChild', (zipfile.Path,), {})
         file = cls(alpharep).joinpath('some dir').parent
         assert isinstance(file, cls)
 
@@ -542,7 +540,7 @@ class TestPath(unittest.TestCase):
     def test_pickle(self, alpharep, path_type, subpath):
         zipfile_ondisk = path_type(str(self.zipfile_ondisk(alpharep)))
 
-        saved_1 = pickle.dumps(zipp.Path(zipfile_ondisk, at=subpath))
+        saved_1 = pickle.dumps(zipfile.Path(zipfile_ondisk, at=subpath))
         restored_1 = pickle.loads(saved_1)
         first, *rest = restored_1.iterdir()
         assert first.read_text(encoding='utf-8').startswith('content of ')
@@ -555,7 +553,7 @@ class TestPath(unittest.TestCase):
         source_path = self.zipfile_ondisk(alpharep)
         zf = zipfile.ZipFile(source_path)
         # wrap the zipfile for its side effect
-        zipp.Path(zf)
+        zipfile.Path(zf)
         zf.extractall(source_path.parent)
 
     @pass_alpharep
@@ -563,6 +561,6 @@ class TestPath(unittest.TestCase):
         """
         Validate behavior of getinfo on original zipfile after wrapping.
         """
-        zipp.Path(alpharep)
+        zipfile.Path(alpharep)
         with self.assertRaises(KeyError):
             alpharep.getinfo('does-not-exist')
