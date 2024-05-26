@@ -515,7 +515,6 @@ class TestPath(unittest.TestCase):
         root = zipfile.Path(alpharep)
         assert root in {root}
 
-    @__import__('pytest').mark.xfail(reason="Not implemented")
     @pass_alpharep
     def test_is_symlink(self, alpharep):
         root = zipfile.Path(alpharep)
