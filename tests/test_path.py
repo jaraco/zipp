@@ -515,14 +515,12 @@ class TestPath(unittest.TestCase):
         root = zipfile.Path(alpharep)
         assert root in {root}
 
+    @__import__('pytest').mark.xfail(reason="Not implemented")
     @pass_alpharep
     def test_is_symlink(self, alpharep):
-        """
-        See python/cpython#82102 for symlink support beyond this object.
-        """
-
         root = zipfile.Path(alpharep)
-        assert not root.is_symlink()
+        assert not root.joinpath('a.txt').is_symlink()
+        assert root.joinpath('n.txt').is_symlink()
 
     @pass_alpharep
     def test_relative_to(self, alpharep):
