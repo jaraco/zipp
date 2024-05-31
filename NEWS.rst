@@ -1,3 +1,12 @@
+v3.19.1
+=======
+
+Bugfixes
+--------
+
+- Improved handling of malformed zip files. (#119)
+
+
 v3.19.0
 =======
 
