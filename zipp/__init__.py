@@ -148,7 +148,7 @@ class SanitizedNames:
         return joined + '/' * name.endswith('/')
 
 
-class CompleteDirs(InitializedState, zipfile.ZipFile):
+class CompleteDirs(InitializedState, SanitizedNames, zipfile.ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
     are always included in the namelist.

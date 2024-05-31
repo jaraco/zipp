@@ -572,7 +572,6 @@ class TestPath(unittest.TestCase):
         with self.assertRaises(KeyError):
             alpharep.getinfo('does-not-exist')
 
-    @__import__('pytest').mark.skip(reason="infinite loop")
     def test_malformed_paths(self):
         """
         Path should handle malformed paths.
