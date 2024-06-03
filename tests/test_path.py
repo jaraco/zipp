@@ -588,3 +588,10 @@ class TestPath(unittest.TestCase):
             'two-slash.txt',
             'parent.txt',
         ]
+
+    @pass_alpharep
+    def test_interface(self, alpharep):
+        from .compat.py39 import Traversable
+
+        zf = zipfile.Path(alpharep)
+        assert isinstance(zf, Traversable)
