@@ -95,7 +95,7 @@ class TestPath(unittest.TestCase):
     def test_iterdir_and_types(self, alpharep):
         root = zipfile.Path(alpharep)
         assert root.is_dir()
-        a, k, b, g, j = root.iterdir()
+        a, n, b, g, j = root.iterdir()
         assert a.is_file()
         assert b.is_dir()
         assert g.is_dir()
@@ -115,7 +115,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_iterdir_on_file(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, k, b, g, j = root.iterdir()
+        a, n, b, g, j = root.iterdir()
         with self.assertRaises(ValueError):
             a.iterdir()
 
@@ -130,7 +130,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_open(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, k, b, g, j = root.iterdir()
+        a, n, b, g, j = root.iterdir()
         with a.open(encoding="utf-8") as strm:
             data = strm.read()
         self.assertEqual(data, "content of a")
@@ -234,7 +234,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_read(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, k, b, g, j = root.iterdir()
+        a, n, b, g, j = root.iterdir()
         assert a.read_text(encoding="utf-8") == "content of a"
         # Also check positional encoding arg (gh-101144).
         assert a.read_text("utf-8") == "content of a"
@@ -300,7 +300,7 @@ class TestPath(unittest.TestCase):
         reflect that change.
         """
         root = zipfile.Path(alpharep)
-        a, k, b, g, j = root.iterdir()
+        a, n, b, g, j = root.iterdir()
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
         assert any(child.name == 'foo.txt' for child in root.iterdir())
