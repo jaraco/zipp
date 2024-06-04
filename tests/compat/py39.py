@@ -13,7 +13,7 @@ sys.modules[__name__ + '.os_helper'] = os_helper
 
 try:
     from importlib.resources.abc import Traversable
-except ImportError:
+except ImportError:  # pragma: no cover
     try:
         # Python 3.9
         from importlib.abc import Traversable
