@@ -591,7 +591,7 @@ class TestPath(unittest.TestCase):
 
     @pass_alpharep
     def test_interface(self, alpharep):
-        from .compat.py39 import Traversable
+        from .compat.py310 import Traversable
 
         zf = zipfile.Path(alpharep)
         assert isinstance(zf, Traversable)
