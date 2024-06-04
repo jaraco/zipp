@@ -19,7 +19,7 @@ except ImportError:
         from importlib.abc import Traversable
     except ImportError:
         # Python 3.8
-        from importlib_resources.abc import Traversable
+        from importlib_resources.abc import Traversable  # type: ignore[no-redef]
 
 
 __all__ = ['Traversable']
