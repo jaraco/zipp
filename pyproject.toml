@@ -22,7 +22,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.urls]
-Homepage = "https://github.com/jaraco/zipp"
+Source = "https://github.com/jaraco/zipp"
 
 [project.optional-dependencies]
 test = [
