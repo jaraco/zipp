@@ -2,7 +2,6 @@ import io
 import posixpath
 import zipfile
 import itertools
-import contextlib
 import pathlib
 import re
 import stat
@@ -10,6 +9,8 @@ import sys
 
 from .compat.py310 import text_encoding
 from .glob import Translator
+
+from ._functools import save_method_args, method_cache
 
 
 __all__ = ['Path']
@@ -73,13 +74,12 @@ class InitializedState:
     Mix-in to save the initialization state for pickling.
     """
 
+    @save_method_args
     def __init__(self, *args, **kwargs):
-        self.__args = args
-        self.__kwargs = kwargs
         super().__init__(*args, **kwargs)
 
     def __getstate__(self):
-        return self.__args, self.__kwargs
+        return self._saved___init__.args, self._saved___init__.kwargs
 
     def __setstate__(self, state):
         args, kwargs = state
@@ -229,17 +229,13 @@ class FastLookup(CompleteDirs):
     dirs exist and are resolved rapidly.
     """
 
+    @method_cache
     def namelist(self):
-        with contextlib.suppress(AttributeError):
-            return self.__names
-        self.__names = super().namelist()
-        return self.__names
+        return super().namelist()
 
+    @method_cache
     def _name_set(self):
-        with contextlib.suppress(AttributeError):
-            return self.__lookup
-        self.__lookup = super()._name_set()
-        return self.__lookup
+        return super()._name_set()
 
 
 def _extract_text_encoding(encoding=None, *args, **kwargs):
