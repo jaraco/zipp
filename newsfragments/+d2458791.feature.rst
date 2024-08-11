@@ -1,0 +1,1 @@
+Made the zipfile compatibility overlay available as zipp.compat.overlay.

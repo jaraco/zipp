@@ -4,7 +4,7 @@ import math
 import re
 import string
 import unittest
-from .compat.overlay import zipfile
+from zipp.compat.overlay import zipfile
 
 from jaraco.functools import compose
 from more_itertools import consume

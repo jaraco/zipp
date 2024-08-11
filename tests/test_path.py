@@ -6,7 +6,7 @@ import pickle
 import stat
 import sys
 import unittest
-from .compat.overlay import zipfile
+from zipp.compat.overlay import zipfile
 
 from .compat.py39.os_helper import temp_dir, FakePath
 
