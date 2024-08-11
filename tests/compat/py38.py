@@ -1,9 +1,9 @@
 import sys
 
 
-if sys.version_info >= (3, 9):
-    from importlib.abc import Traversable
-else:  # pragma: no cover
+if (3, 9) <= sys.version_info < (3, 11):  # pragma: no cover
+    from importlib.abc import Traversable  # type: ignore
+elif sys.version_info < (3, 9):  # pragma: no cover
     from importlib_resources.abc import Traversable
 
 
