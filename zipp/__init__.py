@@ -470,8 +470,7 @@ class Path:
         prefix = re.escape(self.at)
         tr = Translator(seps='/')
         matches = re.compile(prefix + tr.translate(pattern)).fullmatch
-        names = (data.filename for data in self.root.filelist)
-        return map(self._next, filter(matches, names))
+        return map(self._next, filter(matches, self.root.namelist()))
 
     def rglob(self, pattern):
         return self.glob(f'**/{pattern}')
