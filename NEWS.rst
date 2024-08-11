@@ -1,3 +1,12 @@
+v3.19.3
+=======
+
+Bugfixes
+--------
+
+- Also match directories in Path.glob. (#121)
+
+
 v3.19.2
 =======
 
