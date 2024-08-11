@@ -1,3 +1,12 @@
+v3.20.0
+=======
+
+Features
+--------
+
+- Made the zipfile compatibility overlay available as zipp.compat.overlay.
+
+
 v3.19.3
 =======
 
