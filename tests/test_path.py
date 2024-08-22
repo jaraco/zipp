@@ -8,7 +8,7 @@ import sys
 import unittest
 from zipp.compat.overlay import zipfile
 
-from .compat.py39.os_helper import temp_dir, FakePath
+from .compat.py39.os_helper import temp_dir, FakePath  # type: ignore[import-not-found]
 
 import jaraco.itertools
 from jaraco.functools import compose
