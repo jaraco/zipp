@@ -10,6 +10,7 @@ from zipp.compat.overlay import zipfile
 
 from .compat.py39.os_helper import temp_dir, FakePath  # type: ignore[import-not-found]
 
+import pytest
 import jaraco.itertools
 from jaraco.functools import compose
 
@@ -600,6 +601,40 @@ class TestPath(unittest.TestCase):
             'two-slash.txt',
             'parent.txt',
         ]
+
+    @pytest.mark.xfail(reason="python/cpython#123270")
+    def test_unsupported_names(self):
+        """
+        Path segments with special characters are readable.
+
+        On some platforms or file systems, characters like
+        ``:`` and ``?`` are not allowed, but they are valid
+        in the zip file.
+        """
+        data = io.BytesIO()
+        zf = zipfile.ZipFile(data, "w")
+        zf.writestr("path?", b"content")
+        zf.writestr("V: NMS.flac", b"fLaC...")
+        zf.filename = ''
+        root = zipfile.Path(zf)
+        contents = root.iterdir()
+        assert next(contents).name == 'path?'
+        assert next(contents).name == 'V: NMS.flac'
+        assert root.joinpath('V: NMS.flac').read_bytes() == b"fLaC..."
+
+    @pytest.mark.xfail(reason="python/cpython#123270")
+    def test_backslash_not_separator(self):
+        """
+        In a zip file, backslashes are not separators.
+        """
+        data = io.BytesIO()
+        zf = zipfile.ZipFile(data, "w")
+        zf.writestr("foo\\bar", b"content")
+        zf.filename = ''
+        root = zipfile.Path(zf)
+        (first,) = root.iterdir()
+        assert not first.is_dir()
+        assert first.name == 'foo\\bar'
 
     @pass_alpharep
     def test_interface(self, alpharep):
