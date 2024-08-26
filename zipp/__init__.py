@@ -65,7 +65,7 @@ def _ancestry(path):
     ['//b//d///f', '//b//d', '//b']
     """
     path = path.rstrip(posixpath.sep)
-    while path and not path.endswith(posixpath.sep):
+    while path.rstrip(posixpath.sep):
         yield path
         path, tail = posixpath.split(path)
 
