@@ -1,3 +1,12 @@
+v3.20.1
+=======
+
+Bugfixes
+--------
+
+- Replaced SanitizedNames with a more surgical fix for infinite loops, restoring support for names with special characters in the archive. (python/cpython#123270)
+
+
 v3.20.0
 =======
 
