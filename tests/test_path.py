@@ -586,6 +586,7 @@ class TestPath(unittest.TestCase):
             alpharep.getinfo('does-not-exist')
 
     @pytest.mark.xfail(reason="python/cpython#123270")
+    @pytest.mark.timeout(1)
     def test_malformed_paths(self):
         """
         Path should handle malformed paths.
@@ -604,7 +605,6 @@ class TestPath(unittest.TestCase):
         ]
         assert root.joinpath('..').joinpath('parent.txt').read_bytes() == b'content'
 
-    @pytest.mark.xfail(reason="python/cpython#123270")
     def test_unsupported_names(self):
         """
         Path segments with special characters are readable.
@@ -624,7 +624,6 @@ class TestPath(unittest.TestCase):
         assert next(contents).name == 'V: NMS.flac'
         assert root.joinpath('V: NMS.flac').read_bytes() == b"fLaC..."
 
-    @pytest.mark.xfail(reason="python/cpython#123270")
     def test_backslash_not_separator(self):
         """
         In a zip file, backslashes are not separators.
