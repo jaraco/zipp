@@ -585,6 +585,7 @@ class TestPath(unittest.TestCase):
         with self.assertRaises(KeyError):
             alpharep.getinfo('does-not-exist')
 
+    @pytest.mark.xfail(reason="python/cpython#123270")
     def test_malformed_paths(self):
         """
         Path should handle malformed paths.
@@ -599,8 +600,9 @@ class TestPath(unittest.TestCase):
         assert list(map(str, root.iterdir())) == [
             'one-slash.txt',
             'two-slash.txt',
-            'parent.txt',
+            '..',
         ]
+        assert root.joinpath('..').joinpath('parent.txt').read_bytes() == b'content'
 
     @pytest.mark.xfail(reason="python/cpython#123270")
     def test_unsupported_names(self):
