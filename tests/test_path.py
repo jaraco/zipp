@@ -656,6 +656,8 @@ class DirtyZipInfo(zipfile.ZipInfo):
     def for_name(cls, name, archive):
         """
         Construct the same way that ZipFile.writestr does.
+
+        TODO: extract this functionality and re-use
         """
         self = cls(filename=name, date_time=time.localtime(time.time())[:6])
         self.compress_type = archive.compression
