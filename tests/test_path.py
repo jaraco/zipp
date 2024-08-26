@@ -10,7 +10,6 @@ from zipp.compat.overlay import zipfile
 
 from .compat.py39.os_helper import temp_dir, FakePath  # type: ignore[import-not-found]
 
-import pytest
 import jaraco.itertools
 from jaraco.functools import compose
 
@@ -585,10 +584,13 @@ class TestPath(unittest.TestCase):
         with self.assertRaises(KeyError):
             alpharep.getinfo('does-not-exist')
 
-    @pytest.mark.xfail(reason="python/cpython#123270")
     def test_malformed_paths(self):
         """
-        Path should handle malformed paths.
+        Path should handle malformed paths gracefully.
+
+        Paths with leading slashes are not visible.
+
+        Paths with dots are treated like regular files.
         """
         data = io.BytesIO()
         zf = zipfile.ZipFile(data, "w")
@@ -597,11 +599,7 @@ class TestPath(unittest.TestCase):
         zf.writestr("../parent.txt", b"content")
         zf.filename = ''
         root = zipfile.Path(zf)
-        assert list(map(str, root.iterdir())) == [
-            'one-slash.txt',
-            'two-slash.txt',
-            '..',
-        ]
+        assert list(map(str, root.iterdir())) == ['../']
         assert root.joinpath('..').joinpath('parent.txt').read_bytes() == b'content'
 
     def test_unsupported_names(self):
