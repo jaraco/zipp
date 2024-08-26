@@ -37,7 +37,6 @@ test = [
 	"pytest-ignore-flaky",
 	"jaraco.test",
 	"importlib_resources; python_version < '3.9'",
-	"pytest-timeout",
 ]
 
 doc = [

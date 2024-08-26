@@ -586,7 +586,6 @@ class TestPath(unittest.TestCase):
             alpharep.getinfo('does-not-exist')
 
     @pytest.mark.xfail(reason="python/cpython#123270")
-    @pytest.mark.timeout(1)
     def test_malformed_paths(self):
         """
         Path should handle malformed paths.
