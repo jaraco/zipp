@@ -1,58 +1,29 @@
 import os
+import pathlib
+import platform
 import posixpath
+import shlex
 import subprocess
-import sys
-import tempfile
+from importlib.resources import as_file
+
+from zipp.compat.overlay import zipfile
+
+from jaraco.ui.main import main
 
 
-class EditableFile:
-    def __init__(self, data=None):
-        self.data = data
-
-    def __enter__(self):
-        fobj, self.name = tempfile.mkstemp()
-        if self.data:
-            os.write(fobj, self.data)
-        os.close(fobj)
-        return self
-
-    def read(self):
-        with open(self.name, 'rb') as f:
-            return f.read()
-
-    def __exit__(self, *tb_info):
-        os.remove(self.name)
-
-    def edit(self, ipath):
-        self.changed = False
-        with self:
-            editor = self.get_editor(ipath)
-            cmd = [editor, self.name]
-            try:
-                res = subprocess.call(cmd)
-            except Exception as e:
-                print("Error launching editor {editor}".format(**vars()))
-                print(e)
-                return
-            if res != 0:
-                return
-            new_data = self.read()
-            if new_data != self.data:
-                self.changed = True
-                self.data = new_data
-
-    @staticmethod
-    def get_editor(filepath):
-        """
-        Give preference to an XML_EDITOR or EDITOR defined in the
-        environment. Otherwise use notepad on Windows and edit on other
-        platforms.
-        """
-        default_editor = ['edit', 'notepad'][sys.platform.startswith('win32')]
-        return os.environ.get(
-            'XML_EDITOR',
-            os.environ.get('EDITOR', default_editor),
-        )
+def edit(path: pathlib.Path):
+    default_editor = dict(Windows='start').get(platform.system(), 'edit')
+    editor = shlex.split(os.environ.get('EDITOR', default_editor))
+    orig = path.stat()
+    try:
+        res = subprocess.call([*editor, path])
+    except Exception as exc:
+        print(f"Error launching editor {editor}")
+        print(exc)
+        return
+    if res != 0:
+        return
+    return path.stat() != orig
 
 
 def split_all(path):
@@ -67,17 +38,20 @@ def split_all(path):
     return [drive] + parts + [tail]
 
 
-def find_file(path):
+def split(path):
     """
-    Given a path to a part in a zip file, return a path to the file and
+    Given a path to an item in a zip file, return a path to the file and
     the path to the part.
 
-    Assuming /foo.zipx exists as a file,
+    Assuming /foo.zipx exists as a file.
 
-    >>> find_file('/foo.zipx/dir/part') # doctest: +SKIP
-    ('/foo.zipx', '/dir/part')
+    >>> mp = getfixture('monkeypatch')
+    >>> mp.setattr(os.path, 'isfile', lambda fn: fn == '/foo.zipx')
 
-    >>> find_file('/foo.zipx') # doctest: +SKIP
+    >>> split('/foo.zipx/dir/part')
+    ('/foo.zipx', 'dir/part')
+
+    >>> split('/foo.zipx')
     ('/foo.zipx', '')
     """
     path_components = split_all(path)
@@ -94,3 +68,13 @@ def find_file(path):
     for file_path, part_path in get_assemblies():
         if os.path.isfile(file_path):
             return file_path, part_path
+
+
+@main
+def cmd(path: str):
+    zf = zipfile.Path(*split(path))
+    with as_file(zf) as tmp_file:
+        if edit(tmp_file):
+            zf.root.close()
+            with zipfile.ZipFile(zf.root.filename, 'a') as repl:
+                repl.write(tmp_file, zf.at)

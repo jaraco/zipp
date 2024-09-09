@@ -18,6 +18,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
+	"jaraco.ui",
 ]
 dynamic = ["version"]
 
