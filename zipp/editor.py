@@ -1,4 +1,5 @@
 import os
+import posixpath
 import subprocess
 import sys
 import tempfile
@@ -52,3 +53,44 @@ class EditableFile:
             'XML_EDITOR',
             os.environ.get('EDITOR', default_editor),
         )
+
+
+def split_all(path):
+    """
+    recursively call os.path.split until we have all of the components
+    of a pathname suitable for passing back to os.path.join.
+    """
+    drive, path = os.path.splitdrive(path)
+    head, tail = os.path.split(path)
+    terminators = [os.path.sep, os.path.altsep, '']
+    parts = split_all(head) if head not in terminators else [head]
+    return [drive] + parts + [tail]
+
+
+def find_file(path):
+    """
+    Given a path to a part in a zip file, return a path to the file and
+    the path to the part.
+
+    Assuming /foo.zipx exists as a file,
+
+    >>> find_file('/foo.zipx/dir/part') # doctest: +SKIP
+    ('/foo.zipx', '/dir/part')
+
+    >>> find_file('/foo.zipx') # doctest: +SKIP
+    ('/foo.zipx', '')
+    """
+    path_components = split_all(path)
+
+    def get_assemblies():
+        """
+        Enumerate the various combinations of file paths and part paths
+        """
+        for n in range(len(path_components), 0, -1):
+            file_c = path_components[:n]
+            part_c = path_components[n:] or ['']
+            yield (os.path.join(*file_c), posixpath.join(*part_c))
+
+    for file_path, part_path in get_assemblies():
+        if os.path.isfile(file_path):
+            return file_path, part_path
