@@ -1,3 +1,12 @@
+v3.20.2
+=======
+
+Bugfixes
+--------
+
+- Make zipp.compat.overlay.zipfile hashable. (#126)
+
+
 v3.20.1
 =======
 
