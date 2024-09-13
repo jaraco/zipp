@@ -15,8 +15,7 @@ Relative imports are supported too.
 The ``zipfile`` object added to ``sys.modules`` needs to be
 hashable (#126).
 
->>> hash(sys.modules['zipp.compat.overlay.zipfile']) > 0
-True
+>>> _ = hash(sys.modules['zipp.compat.overlay.zipfile'])
 """
 
 import importlib
