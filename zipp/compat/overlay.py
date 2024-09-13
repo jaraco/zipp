@@ -11,6 +11,12 @@ in place of ``import zipfile``.
 Relative imports are supported too.
 
 >>> from zipp.compat.overlay.zipfile import ZipInfo
+
+The ``zipfile`` object added to ``sys.modules`` needs to be
+hashable (#126).
+
+>>> hash(sys.modules['zipp.compat.overlay.zipfile']) > 0
+True
 """
 
 import importlib
@@ -20,7 +26,12 @@ import types
 import zipp
 
 
-zipfile = types.SimpleNamespace(**vars(importlib.import_module('zipfile')))
+class HashableNamespace(types.SimpleNamespace):
+    def __hash__(self):
+        return hash(tuple(vars(self)))
+
+
+zipfile = HashableNamespace(**vars(importlib.import_module('zipfile')))
 zipfile.Path = zipp.Path
 zipfile._path = zipp
 
