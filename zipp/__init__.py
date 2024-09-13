@@ -7,7 +7,7 @@ https://github.com/python/importlib_metadata/wiki/Development-Methodology
 for more detail.
 """
 
-import contextlib
+import functools
 import io
 import itertools
 import pathlib
@@ -181,16 +181,18 @@ class FastLookup(CompleteDirs):
     """
 
     def namelist(self):
-        with contextlib.suppress(AttributeError):
-            return self.__names
-        self.__names = super().namelist()
-        return self.__names
+        return self._namelist
+
+    @functools.cached_property
+    def _namelist(self):
+        return super().namelist()
 
     def _name_set(self):
-        with contextlib.suppress(AttributeError):
-            return self.__lookup
-        self.__lookup = super()._name_set()
-        return self.__lookup
+        return self._name_set_prop
+
+    @functools.cached_property
+    def _name_set_prop(self):
+        return super()._name_set()
 
 
 def _extract_text_encoding(encoding=None, *args, **kwargs):
