@@ -25,9 +25,7 @@ CallableT = TypeVar("CallableT", bound=Callable[..., object])
 
 def method_cache(
     method: CallableT,
-    cache_wrapper: Callable[
-        [CallableT], CallableT
-    ] = functools.lru_cache(),  # type: ignore[assignment]
+    cache_wrapper: Callable[[CallableT], CallableT] = functools.lru_cache(),  # type: ignore[assignment]
 ) -> CallableT:
     """
     Wrap lru_cache to support storing the cache data in the object instances.
