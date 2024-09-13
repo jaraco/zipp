@@ -1,20 +1,20 @@
+import contextlib
 import io
 import itertools
-import contextlib
 import pathlib
 import pickle
 import stat
 import sys
 import time
 import unittest
-from zipp.compat.overlay import zipfile
-
-from .compat.py39.os_helper import temp_dir, FakePath  # type: ignore[import-not-found]
 
 import jaraco.itertools
 from jaraco.functools import compose
 
-from ._test_params import parameterize, Invoked
+from zipp.compat.overlay import zipfile
+
+from ._test_params import Invoked, parameterize
+from .compat.py39.os_helper import FakePath, temp_dir  # type: ignore[import-not-found]
 
 
 def _make_link(info: zipfile.ZipInfo):  # type: ignore[name-defined]

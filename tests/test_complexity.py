@@ -4,13 +4,13 @@ import math
 import re
 import string
 import unittest
-from zipp.compat.overlay import zipfile
 
 from jaraco.functools import compose
 from more_itertools import consume
 
-from ._support import import_or_skip
+from zipp.compat.overlay import zipfile
 
+from ._support import import_or_skip
 
 big_o = import_or_skip('big_o')
 pytest = import_or_skip('pytest')

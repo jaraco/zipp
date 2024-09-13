@@ -7,19 +7,18 @@ https://github.com/python/importlib_metadata/wiki/Development-Methodology
 for more detail.
 """
 
-import io
-import posixpath
-import zipfile
-import itertools
 import contextlib
+import io
+import itertools
 import pathlib
+import posixpath
 import re
 import stat
 import sys
+import zipfile
 
 from .compat.py310 import text_encoding
 from .glob import Translator
-
 
 __all__ = ['Path']
 
