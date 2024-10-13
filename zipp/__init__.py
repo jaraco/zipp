@@ -345,14 +345,14 @@ class Path:
         zip_mode = mode[0]
         if not self.exists() and zip_mode == 'r':
             raise FileNotFoundError(self)
-        stream = self.root.open(self.at, zip_mode, pwd=pwd)
-        if 'b' in mode:
-            if args or kwargs:
-                raise ValueError("encoding args invalid for binary operation")
-            return stream
-        # Text mode:
-        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        return io.TextIOWrapper(stream, encoding, *args, **kwargs)
+        with self.root.open(self.at, zip_mode, pwd=pwd) as stream:
+            if 'b' in mode:
+                if args or kwargs:
+                    raise ValueError("encoding args invalid for binary operation")
+                return stream
+            # Text mode:
+            encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
+            return io.TextIOWrapper(stream, encoding, *args, **kwargs)
 
     def _base(self):
         return pathlib.PurePosixPath(self.at or self.root.filename)
