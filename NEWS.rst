@@ -1,3 +1,14 @@
+v3.21.0
+=======
+
+Features
+--------
+
+- Improve performances of :meth:`zipfile.Path.open` for non-reading modes. (1a1928d)
+- Rely on cached_property to cache values on the instance.
+- Rely on save_method_args to save method args.
+
+
 v3.20.2
 =======
 
