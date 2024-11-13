@@ -7,204 +7,86 @@ https://github.com/python/importlib_metadata/wiki/Development-Methodology
 for more detail.
 """
 
-import functools
 import io
-import itertools
 import pathlib
 import posixpath
-import re
 import stat
-import sys
 import zipfile
 
-from .compat.py310 import text_encoding
-from .glob import Translator
-
-from ._functools import save_method_args
+import pathlib_abc
 
 
 __all__ = ['Path']
 
 
-def _parents(path):
-    """
-    Given a path with elements separated by
-    posixpath.sep, generate all parents of that path.
-
-    >>> list(_parents('b/d'))
-    ['b']
-    >>> list(_parents('/b/d/'))
-    ['/b']
-    >>> list(_parents('b/d/f/'))
-    ['b/d', 'b']
-    >>> list(_parents('b'))
-    []
-    >>> list(_parents(''))
-    []
-    """
-    return itertools.islice(_ancestry(path), 1, None)
+class MissingInfo(pathlib_abc.PathInfo):
+    zip_info = None
+    children = {}
+    def exists(self, follow_symlinks=True): return False
+    def is_dir(self, follow_symlinks=True): return False
+    def is_file(self, follow_symlinks=True): return False
+    def is_symlink(self): return False
 
 
-def _ancestry(path):
-    """
-    Given a path with elements separated by
-    posixpath.sep, generate all elements of that path.
+class PathInfo(pathlib_abc.PathInfo):
+    def __init__(self):
+        self.zip_info = None
+        self.children = {}
 
-    >>> list(_ancestry('b/d'))
-    ['b/d', 'b']
-    >>> list(_ancestry('/b/d/'))
-    ['/b/d', '/b']
-    >>> list(_ancestry('b/d/f/'))
-    ['b/d/f', 'b/d', 'b']
-    >>> list(_ancestry('b'))
-    ['b']
-    >>> list(_ancestry(''))
-    []
+    def exists(self, follow_symlinks=True):
+        return True
 
-    Multiple separators are treated like a single.
+    def is_dir(self, follow_symlinks=True):
+        if self.zip_info is None:
+            return True
+        else:
+            return self.zip_info.filename.endswith('/')
 
-    >>> list(_ancestry('//b//d///f//'))
-    ['//b//d///f', '//b//d', '//b']
-    """
-    path = path.rstrip(posixpath.sep)
-    while path.rstrip(posixpath.sep):
-        yield path
-        path, tail = posixpath.split(path)
+    def is_file(self, follow_symlinks=True):
+        if self.zip_info is None:
+            return False
+        else:
+            return not self.zip_info.filename.endswith('/')
 
+    def is_symlink(self):
+        return False
 
-_dedupe = dict.fromkeys
-"""Deduplicate an iterable in original order"""
-
-
-def _difference(minuend, subtrahend):
-    """
-    Return items in minuend not in subtrahend, retaining order
-    with O(1) lookup.
-    """
-    return itertools.filterfalse(set(subtrahend).__contains__, minuend)
-
-
-class InitializedState:
-    """
-    Mix-in to save the initialization state for pickling.
-    """
-
-    @save_method_args
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def __getstate__(self):
-        return self._saved___init__.args, self._saved___init__.kwargs
-
-    def __setstate__(self, state):
-        args, kwargs = state
-        super().__init__(*args, **kwargs)
+    def resolve(self, path, create=False):
+        if not path:
+            return self
+        name, _, path = path.partition('/')
+        if not name:
+            info = self
+        elif name in self.children:
+            info = self.children[name]
+        elif create:
+            info = self.children[name] = PathInfo()
+        else:
+            return MissingInfo()
+        return info.resolve(path, create)
 
 
-class CompleteDirs(InitializedState, zipfile.ZipFile):
-    """
-    A ZipFile subclass that ensures that implied directories
-    are always included in the namelist.
+class FileList:
+    def __init__(self, items):
+        self._tree = PathInfo()
+        self._items = []
+        for item in items:
+            self.append(item)
 
-    >>> list(CompleteDirs._implied_dirs(['foo/bar.txt', 'foo/bar/baz.txt']))
-    ['foo/', 'foo/bar/']
-    >>> list(CompleteDirs._implied_dirs(['foo/bar.txt', 'foo/bar/baz.txt', 'foo/bar/']))
-    ['foo/']
-    """
+    def __len__(self):
+        return len(self._items)
 
-    @staticmethod
-    def _implied_dirs(names):
-        parents = itertools.chain.from_iterable(map(_parents, names))
-        as_dirs = (p + posixpath.sep for p in parents)
-        return _dedupe(_difference(as_dirs, names))
+    def __iter__(self):
+        return iter(self._items)
 
-    def namelist(self):
-        names = super().namelist()
-        return names + list(self._implied_dirs(names))
-
-    def _name_set(self):
-        return set(self.namelist())
-
-    def resolve_dir(self, name):
-        """
-        If the name represents a directory, return that name
-        as a directory (with the trailing slash).
-        """
-        names = self._name_set()
-        dirname = name + '/'
-        dir_match = name not in names and dirname in names
-        return dirname if dir_match else name
-
-    def getinfo(self, name):
-        """
-        Supplement getinfo for implied dirs.
-        """
-        try:
-            return super().getinfo(name)
-        except KeyError:
-            if not name.endswith('/') or name not in self._name_set():
-                raise
-            return zipfile.ZipInfo(filename=name)
-
-    @classmethod
-    def make(cls, source):
-        """
-        Given a source (filename or zipfile), return an
-        appropriate CompleteDirs subclass.
-        """
-        if isinstance(source, CompleteDirs):
-            return source
-
-        if not isinstance(source, zipfile.ZipFile):
-            return cls(source)
-
-        # Only allow for FastLookup when supplied zipfile is read-only
-        if 'r' not in source.mode:
-            cls = CompleteDirs
-
-        source.__class__ = cls
-        return source
-
-    @classmethod
-    def inject(cls, zf: zipfile.ZipFile) -> zipfile.ZipFile:
-        """
-        Given a writable zip file zf, inject directory entries for
-        any directories implied by the presence of children.
-        """
-        for name in cls._implied_dirs(zf.namelist()):
-            zf.writestr(name, b"")
-        return zf
+    def append(self, item):
+        info = self._tree.resolve(item.filename, create=True)
+        info.zip_info = item
+        self._items.append(item)
 
 
-class FastLookup(CompleteDirs):
-    """
-    ZipFile subclass to ensure implicit
-    dirs exist and are resolved rapidly.
-    """
 
-    def namelist(self):
-        return self._namelist
-
-    @functools.cached_property
-    def _namelist(self):
-        return super().namelist()
-
-    def _name_set(self):
-        return self._name_set_prop
-
-    @functools.cached_property
-    def _name_set_prop(self):
-        return super()._name_set()
-
-
-def _extract_text_encoding(encoding=None, *args, **kwargs):
-    # compute stack level so that the caller of the caller sees any warning.
-    is_pypy = sys.implementation.name == 'pypy'
-    stack_level = 3 + is_pypy
-    return text_encoding(encoding, stack_level), args, kwargs
-
-
-class Path:
+class Path(pathlib_abc.ReadablePath):
     """
     A :class:`importlib.resources.abc.Traversable` interface for zip files.
 
@@ -308,6 +190,7 @@ class Path:
     """
 
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
+    parser = posixpath
 
     def __init__(self, root, at=""):
         """
@@ -319,7 +202,11 @@ class Path:
         original type, the caller should either create a
         separate ZipFile object or pass a filename.
         """
-        self.root = FastLookup.make(root)
+        if not isinstance(root, zipfile.ZipFile):
+            root = zipfile.ZipFile(root)
+        if not isinstance(root.filelist, FileList):
+            root.filelist = FileList(root.filelist)
+        self.root = root
         self.at = at
 
     def __eq__(self, other):
@@ -334,78 +221,63 @@ class Path:
     def __hash__(self):
         return hash((self.root, self.at))
 
+    def __reduce__(self):
+        return (self.__class__, (self.root.filename, self.at))
+
     def open(self, mode='r', *args, pwd=None, **kwargs):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
+        return pathlib_abc.magic_open(self, mode, -1, *args, **kwargs)
+
+    def __open_rb__(self, buffering=-1):
         if self.is_dir():
             raise IsADirectoryError(self)
-        zip_mode = mode[0]
-        if zip_mode == 'r' and not self.exists():
+        elif not self.exists():
             raise FileNotFoundError(self)
-        stream = self.root.open(self.at, zip_mode, pwd=pwd)
-        if 'b' in mode:
-            if args or kwargs:
-                raise ValueError("encoding args invalid for binary operation")
-            return stream
-        # Text mode:
-        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        return io.TextIOWrapper(stream, encoding, *args, **kwargs)
+        path = self.info.zip_info or str(self)
+        return self.root.open(path, 'r')
 
-    def _base(self):
-        return pathlib.PurePosixPath(self.at or self.root.filename)
+    def __open_wb__(self, buffering=-1):
+        if self.is_dir():
+            raise IsADirectoryError(self)
+        path = self.info.zip_info or str(self)
+        return self.root.open(path, 'w')
 
     @property
     def name(self):
-        return self._base().name
-
-    @property
-    def suffix(self):
-        return self._base().suffix
-
-    @property
-    def suffixes(self):
-        return self._base().suffixes
-
-    @property
-    def stem(self):
-        return self._base().stem
+        if self.at:
+            return super().name
+        filename = self.root.filename
+        if filename is None:
+            raise TypeError
+        return filename
 
     @property
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
-    def read_text(self, *args, **kwargs):
-        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        with self.open('r', encoding, *args, **kwargs) as strm:
-            return strm.read()
-
-    def read_bytes(self):
-        with self.open('rb') as strm:
-            return strm.read()
-
-    def _is_child(self, path):
-        return posixpath.dirname(path.at.rstrip("/")) == self.at.rstrip("/")
-
-    def _next(self, at):
-        return self.__class__(self.root, at)
-
     def is_dir(self):
-        return not self.at or self.at.endswith("/")
+        return self.info.is_dir()
 
     def is_file(self):
-        return self.exists() and not self.is_dir()
+        return self.info.is_file()
 
     def exists(self):
-        return self.at in self.root._name_set()
+        return self.info.exists()
 
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        subs = map(self._next, self.root.namelist())
-        return filter(self._is_child, subs)
+        # FIXME: This rigmarole is a workaround for #130.
+        names1 = []
+        names2 = []
+        for name, info in self.info.children.items():
+            names = names1 if info.zip_info else names2
+            names.append(name)
+        return (self / name for name in names1 + names2)
 
     def match(self, path_pattern):
         return pathlib.PurePosixPath(self.at).match(path_pattern)
@@ -414,18 +286,11 @@ class Path:
         """
         Return whether this path is a symlink.
         """
-        info = self.root.getinfo(self.at)
+        info = self.info.zip_info
+        if not info:
+            return False
         mode = info.external_attr >> 16
         return stat.S_ISLNK(mode)
-
-    def glob(self, pattern):
-        if not pattern:
-            raise ValueError(f"Unacceptable pattern: {pattern!r}")
-
-        prefix = re.escape(self.at)
-        tr = Translator(seps='/')
-        matches = re.compile(prefix + tr.translate(pattern)).fullmatch
-        return map(self._next, filter(matches, self.root.namelist()))
 
     def rglob(self, pattern):
         return self.glob(f'**/{pattern}')
@@ -434,22 +299,41 @@ class Path:
         return posixpath.relpath(str(self), str(other.joinpath(*extra)))
 
     def __str__(self):
-        return posixpath.join(self.root.filename, self.at)
+        return self.at
 
     def __repr__(self):
         return self.__repr.format(self=self)
 
-    def joinpath(self, *other):
-        next = posixpath.join(self.at, *other)
-        return self._next(self.root.resolve_dir(next))
-
-    __truediv__ = joinpath
-
     @property
     def parent(self):
-        if not self.at:
-            return self.filename.parent
-        parent_at = posixpath.dirname(self.at.rstrip('/'))
-        if parent_at:
-            parent_at += '/'
-        return self._next(parent_at)
+        if self.at:
+            return super().parent
+        filename = self.root.filename
+        if filename is None:
+            raise TypeError
+        return pathlib.Path(filename).parent
+
+    def with_segments(self, *pathsegments):
+        at = self.parser.join(*pathsegments)
+        return type(self)(self.root, at)
+
+    @property
+    def info(self):
+        return self.root.filelist._tree.resolve(str(self))
+
+    def readlink(self):
+        raise NotImplementedError
+
+    # Disable "free" features from pathlib-abc that we don't test
+    # FIXME: enable these.
+    __rtruediv__ = None
+    anchor = None
+    parts = None
+    parents = None
+    with_name = None
+    with_stem = None
+    with_suffix = None
+    full_match = None
+    walk = None
+    copy = None
+    copy_into = None
