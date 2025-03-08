@@ -17,11 +17,9 @@ import stat
 import sys
 import zipfile
 
+from ._functools import save_method_args
 from .compat.py310 import text_encoding
 from .glob import Translator
-
-from ._functools import save_method_args
-
 
 __all__ = ['Path']
 
