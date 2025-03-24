@@ -25,21 +25,17 @@ class PathInfo(pathlib_abc.PathInfo):
         self.zip_info = None
         self.children = {}
 
-    def exists(self, follow_symlinks=True):
-        return self._exists
-
-    def is_dir(self, follow_symlinks=True):
+    def __iter__(self):
         if self.zip_info:
-            return self.zip_info.filename.endswith('/')
-        return self._exists
+            yield self.zip_info
+        for child in self.children.values():
+            yield from child
 
-    def is_file(self, follow_symlinks=True):
-        if self.zip_info:
-            return not self.zip_info.filename.endswith('/')
-        return False
+    def __len__(self):
+        return len(list(iter(self)))
 
-    def is_symlink(self):
-        return False
+    def append(self, zip_info):
+        self.resolve(zip_info.filename, True).zip_info = zip_info
 
     def resolve(self, path, create=False):
         if not path:
@@ -55,27 +51,21 @@ class PathInfo(pathlib_abc.PathInfo):
             return PathInfo(exists=False)
         return info.resolve(path, create)
 
+    def exists(self, follow_symlinks=True):
+        return self._exists
 
-class FileList:
-    def __init__(self, items):
-        self.tree = PathInfo()
-        self._items = items
-        for item in items:
-            self._load(item)
+    def is_dir(self, follow_symlinks=True):
+        if self.zip_info:
+            return self.zip_info.filename.endswith('/')
+        return self._exists
 
-    def __len__(self):
-        return len(self._items)
+    def is_file(self, follow_symlinks=True):
+        if self.zip_info:
+            return not self.zip_info.filename.endswith('/')
+        return False
 
-    def __iter__(self):
-        return iter(self._items)
-
-    def append(self, item):
-        self._items.append(item)
-        self._load(item)
-
-    def _load(self, item):
-        info = self.tree.resolve(item.filename, create=True)
-        info.zip_info = item
+    def is_symlink(self):
+        return False
 
 
 class Path(pathlib_abc.ReadablePath):
@@ -196,8 +186,11 @@ class Path(pathlib_abc.ReadablePath):
         """
         if not isinstance(root, zipfile.ZipFile):
             root = zipfile.ZipFile(root)
-        if not isinstance(root.filelist, FileList):
-            root.filelist = FileList(root.filelist)
+        if not isinstance(root.filelist, PathInfo):
+            filelist = PathInfo()
+            for zip_info in root.filelist:
+                filelist.append(zip_info)
+            root.filelist = filelist
         self.root = root
         self.at = at
 
@@ -234,7 +227,7 @@ class Path(pathlib_abc.ReadablePath):
     def __open_wb__(self, buffering=-1):
         if self.is_dir():
             raise IsADirectoryError(self)
-        return self.root.open(str(self), 'w')
+        return self.root.open(self.at, 'w')
 
     def _base(self):
         return super() if self.at else pathlib.PurePosixPath(self.root.filename)
@@ -316,7 +309,7 @@ class Path(pathlib_abc.ReadablePath):
 
     @property
     def info(self):
-        return self.root.filelist.tree.resolve(str(self))
+        return self.root.filelist.resolve(self.at)
 
     def readlink(self):
         raise NotImplementedError
