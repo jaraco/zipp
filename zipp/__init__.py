@@ -246,29 +246,24 @@ class Path(pathlib_abc.ReadablePath):
         path = self.info.zip_info or str(self)
         return self.root.open(path, 'w')
 
+    def _base(self):
+        return super() if self.at else pathlib.PurePosixPath(self.root.filename)
+
     @property
     def name(self):
-        if not self.at:
-            return self.filename.name
-        return super().name
+        return self._base().name
 
     @property
     def suffix(self):
-        if not self.at:
-            return self.filename.suffix
-        return super().suffix
+        return self._base().suffix
 
     @property
     def suffixes(self):
-        if not self.at:
-            return self.filename.suffixes
-        return super().suffixes
+        return self._base().suffixes
 
     @property
     def stem(self):
-        if not self.at:
-            return self.filename.stem
-        return super().stem
+        return self._base().stem
 
     @property
     def filename(self):
