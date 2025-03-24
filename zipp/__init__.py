@@ -20,10 +20,12 @@ __all__ = ['Path']
 
 
 class PathInfo(pathlib_abc.PathInfo):
-    def __init__(self, exists=True):
+    def __init__(self, items=tuple(), exists=True):
         self._exists = exists
         self.zip_info = None
         self.children = {}
+        for zip_info in items:
+            self.append(zip_info)
 
     def __iter__(self):
         if self.zip_info:
@@ -190,10 +192,7 @@ class Path(pathlib_abc.ReadablePath):
         if not isinstance(root, zipfile.ZipFile):
             root = zipfile.ZipFile(root)
         if not isinstance(root.filelist, PathInfo):
-            filelist = PathInfo()
-            for zip_info in root.filelist:
-                filelist.append(zip_info)
-            root.filelist = filelist
+            root.filelist = PathInfo(root.filelist)
         self.root = root
         self.at = at
 
