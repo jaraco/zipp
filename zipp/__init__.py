@@ -254,6 +254,10 @@ class Path(pathlib_abc.ReadablePath):
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
+    @property
+    def info(self):
+        return self.root.filelist.resolve(self.at)
+
     def with_segments(self, *pathsegments):
         at = self.parser.join(*pathsegments)
         return self.__class__(self.root, at)
@@ -291,6 +295,9 @@ class Path(pathlib_abc.ReadablePath):
         mode = info.external_attr >> 16
         return stat.S_ISLNK(mode)
 
+    def readlink(self):
+        raise NotImplementedError
+
     def rglob(self, pattern):
         return self.glob(f'**/{pattern}')
 
@@ -308,13 +315,6 @@ class Path(pathlib_abc.ReadablePath):
         if not self.at:
             return self.filename.parent
         return super().parent
-
-    @property
-    def info(self):
-        return self.root.filelist.resolve(self.at)
-
-    def readlink(self):
-        raise NotImplementedError
 
     # Disable "free" features from pathlib-abc that we don't test
     # FIXME: enable these.
