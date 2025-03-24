@@ -248,12 +248,9 @@ class Path(pathlib_abc.ReadablePath):
 
     @property
     def name(self):
-        if self.at:
-            return super().name
-        filename = self.root.filename
-        if filename is None:
-            raise TypeError
-        return filename
+        if not self.at:
+            return self.filename.name
+        return super().name
 
     @property
     def filename(self):
@@ -306,12 +303,9 @@ class Path(pathlib_abc.ReadablePath):
 
     @property
     def parent(self):
-        if self.at:
-            return super().parent
-        filename = self.root.filename
-        if filename is None:
-            raise TypeError
-        return pathlib.Path(filename).parent
+        if not self.at:
+            return self.filename.parent
+        return super().parent
 
     def with_segments(self, *pathsegments):
         at = self.parser.join(*pathsegments)
