@@ -32,7 +32,10 @@ class PathInfo(pathlib_abc.PathInfo):
             yield from child
 
     def __len__(self):
-        return len(list(iter(self)))
+        length = 1 if self.zip_info else 0
+        for child in self.children.values():
+            length += len(child)
+        return length
 
     def append(self, zip_info):
         self.resolve(zip_info.filename, True).zip_info = zip_info
