@@ -229,8 +229,7 @@ class Path(pathlib_abc.ReadablePath):
             raise IsADirectoryError(self)
         elif not self.exists():
             raise FileNotFoundError(self)
-        path = self.info.zip_info or str(self)
-        return self.root.open(path, 'r')
+        return self.root.open(self.info.zip_info, 'r')
 
     def __open_wb__(self, buffering=-1):
         if self.is_dir():
