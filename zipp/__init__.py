@@ -253,6 +253,24 @@ class Path(pathlib_abc.ReadablePath):
         return super().name
 
     @property
+    def suffix(self):
+        if not self.at:
+            return self.filename.suffix
+        return super().suffix
+
+    @property
+    def suffixes(self):
+        if not self.at:
+            return self.filename.suffixes
+        return super().suffixes
+
+    @property
+    def stem(self):
+        if not self.at:
+            return self.filename.stem
+        return super().stem
+
+    @property
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
