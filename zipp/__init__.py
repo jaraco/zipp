@@ -260,6 +260,10 @@ class Path(pathlib_abc.ReadablePath):
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
+    def with_segments(self, *pathsegments):
+        at = self.parser.join(*pathsegments)
+        return self.__class__(self.root, at)
+
     def is_dir(self):
         return self.info.is_dir()
 
@@ -310,10 +314,6 @@ class Path(pathlib_abc.ReadablePath):
         if not self.at:
             return self.filename.parent
         return super().parent
-
-    def with_segments(self, *pathsegments):
-        at = self.parser.join(*pathsegments)
-        return type(self)(self.root, at)
 
     @property
     def info(self):
