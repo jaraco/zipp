@@ -16,10 +16,20 @@ import zipfile
 import pathlib_abc
 
 
-__all__ = ['Path']
+__all__ = ['PathInfo', 'Path']
 
 
 class PathInfo(pathlib_abc.PathInfo):
+    """
+    A :class:`pathlib.types.PathInfo` interface for zip file members.
+
+    An instance of this class replaces the :attr:`ZipFile.filelist` object,
+    and represents the root of the zip member tree. To remain (mostly)
+    compatible with the original list interface, this class provides a
+    :meth:`~list.append` method, plus :meth:`~object.__iter__` and
+    :meth:`~object.__len__` methods that traverse the tree.
+    """
+
     def __init__(self, items=tuple(), exists=True):
         self._exists = exists
         self.zip_info = None
@@ -217,7 +227,11 @@ class Path(pathlib_abc.ReadablePath):
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
-        return pathlib_abc.magic_open(self, mode, -1, *args, **kwargs)
+        old_pwd, self.root.pwd = self.root.pwd, pwd
+        try:
+            return pathlib_abc.magic_open(self, mode, -1, *args, **kwargs)
+        finally:
+            self.root.pwd = old_pwd
 
     def __open_rb__(self, buffering=-1):
         if self.is_dir():
@@ -259,7 +273,7 @@ class Path(pathlib_abc.ReadablePath):
         return self.root.filelist.resolve(self.at)
 
     def with_segments(self, *pathsegments):
-        at = self.parser.join(*pathsegments)
+        at = posixpath.join(*pathsegments)
         return self.__class__(self.root, at)
 
     def is_dir(self):
@@ -274,6 +288,7 @@ class Path(pathlib_abc.ReadablePath):
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
+        #return (self / name for name in self.info.children)
         # FIXME: This rigmarole is a workaround for #130.
         names1 = []
         names2 = []
