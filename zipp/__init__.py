@@ -8,7 +8,6 @@ for more detail.
 """
 
 import io
-import os
 import pathlib
 import posixpath
 import stat
@@ -18,23 +17,6 @@ import pathlib_abc
 
 
 __all__ = ['Path']
-
-
-class PathParser(pathlib_abc.PathParser):
-    sep = '/'
-    altsep = None
-    splitext = staticmethod(posixpath.splitext)
-    normcase = staticmethod(posixpath.normcase)
-
-    def __init__(self, anchor):
-        self.anchor = anchor
-
-    def split(self, path):
-        if not path.startswith(self.anchor):
-            return path.rpartition(self.sep)[::2]
-        path = path[len(self.anchor):]
-        head, tail = path.rpartition(self.sep)[::2]
-        return self.anchor + head, tail
 
 
 class PathInfo(pathlib_abc.PathInfo):
@@ -195,6 +177,7 @@ class Path(pathlib_abc.ReadablePath):
     """
 
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
+    parser = posixpath
 
     def __init__(self, root, at=""):
         """
@@ -272,22 +255,11 @@ class Path(pathlib_abc.ReadablePath):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
     @property
-    def anchor(self):
-        if self.root.filename is None:
-            return ':fileobj:/'
-        return posixpath.join(self.root.filename, '')
-
-    @property
-    def parser(self):
-        return PathParser(self.anchor)
-
-    @property
     def info(self):
         return self.root.filelist.resolve(self.at)
 
     def with_segments(self, *pathsegments):
-        parts = [os.fspath(p).removeprefix(self.anchor) for p in pathsegments]
-        at = posixpath.join(*parts)
+        at = self.parser.join(*pathsegments)
         return self.__class__(self.root, at)
 
     def is_dir(self):
@@ -333,7 +305,7 @@ class Path(pathlib_abc.ReadablePath):
         return posixpath.relpath(str(self), str(other.joinpath(*extra)))
 
     def __str__(self):
-        return self.anchor + self.at
+        return self.at
 
     def __repr__(self):
         return self.__repr.format(self=self)
@@ -347,6 +319,7 @@ class Path(pathlib_abc.ReadablePath):
     # Disable "free" features from pathlib-abc that we don't test
     # FIXME: enable these.
     __rtruediv__ = None
+    anchor = None
     parts = None
     parents = None
     with_name = None
