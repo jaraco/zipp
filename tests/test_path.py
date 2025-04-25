@@ -347,9 +347,22 @@ class TestPath(unittest.TestCase):
         assert isinstance(root / 'b', Subclass)
 
     @pass_alpharep
+    def test_at(self, alpharep):
+        root = zipfile.Path(alpharep)
+        assert root.at == ''
+        assert (root / 'foo' / 'bar').at == 'foo/bar'
+
+    @pass_alpharep
+    def test_str(self, alpharep):
+        root = zipfile.Path(alpharep)
+        assert str(root) == ''
+        assert str(root / 'foo' / 'bar') == 'foo/bar'
+
+    @pass_alpharep
     def test_filename(self, alpharep):
         root = zipfile.Path(alpharep)
         assert root.filename == pathlib.Path('alpharep.zip')
+
 
     @pass_alpharep
     def test_root_name(self, alpharep):
