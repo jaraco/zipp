@@ -363,7 +363,6 @@ class TestPath(unittest.TestCase):
         root = zipfile.Path(alpharep)
         assert root.filename == pathlib.Path('alpharep.zip')
 
-
     @pass_alpharep
     def test_root_name(self, alpharep):
         """

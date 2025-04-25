@@ -268,8 +268,7 @@ class Path:
 
     Coercion to string:
 
-    >>> import os
-    >>> str(c).replace(os.sep, posixpath.sep)
+    >>> str(c)
     'b/c.txt'
 
     At the root, ``name``, ``filename``, and ``parent``
