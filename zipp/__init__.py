@@ -15,7 +15,6 @@ import zipfile
 
 import pathlib_abc
 
-
 __all__ = ['PathInfo', 'Path']
 
 

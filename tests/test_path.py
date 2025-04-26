@@ -9,7 +9,6 @@ import time
 import unittest
 
 import jaraco.itertools
-from jaraco.functools import compose
 
 from zipp.compat.overlay import zipfile
 
