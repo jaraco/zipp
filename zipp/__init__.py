@@ -288,7 +288,7 @@ class Path(pathlib_abc.ReadablePath):
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        #return (self / name for name in self.info.children)
+        # return (self / name for name in self.info.children)
         # FIXME: This rigmarole is a workaround for #130.
         names1 = []
         names2 = []

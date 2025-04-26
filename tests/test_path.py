@@ -72,7 +72,7 @@ def build_alpharep_fixture():
 
 alpharep_generators = [
     Invoked.wrap(build_alpharep_fixture),
-    #Invoked.wrap(compose(zipfile._path.CompleteDirs.inject, build_alpharep_fixture)),
+    # Invoked.wrap(compose(zipfile._path.CompleteDirs.inject, build_alpharep_fixture)),
 ]
 
 pass_alpharep = parameterize(['alpharep'], alpharep_generators)
@@ -601,7 +601,11 @@ class TestPath(unittest.TestCase):
         zf.writestr("../parent.txt", b"content")
         zf.filename = ''
         root = zipfile.Path(zf)
-        assert list(map(str, root.iterdir())) == ['one-slash.txt', 'two-slash.txt', '..']
+        assert list(map(str, root.iterdir())) == [
+            'one-slash.txt',
+            'two-slash.txt',
+            '..',
+        ]
         assert root.joinpath('..').joinpath('parent.txt').read_bytes() == b'content'
 
     def test_unsupported_names(self):
