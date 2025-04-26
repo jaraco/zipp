@@ -7,7 +7,6 @@ https://github.com/python/importlib_metadata/wiki/Development-Methodology
 for more detail.
 """
 
-import io
 import pathlib
 import posixpath
 import stat
@@ -98,6 +97,7 @@ class Path(pathlib_abc.ReadablePath):
             └── d
                 └── e.txt
 
+    >>> import io
     >>> data = io.BytesIO()
     >>> zf = zipfile.ZipFile(data, 'w')
     >>> zf.writestr('a.txt', 'content of a')
@@ -207,6 +207,7 @@ class Path(pathlib_abc.ReadablePath):
 
     def __eq__(self, other):
         """
+        >>> import io
         >>> Path(zipfile.ZipFile(io.BytesIO(), 'w')) == 'foo'
         False
         """
