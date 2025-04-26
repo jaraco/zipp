@@ -7,7 +7,7 @@ def pytest_configure():
 
 
 def add_future_flags():  # pragma: no cover
-    if sys.version_info > (3, 10):
+    if sys.version_info >= (3, 10):
         return
 
     builtins.EncodingWarning = type('EncodingWarning', (Warning,), {})

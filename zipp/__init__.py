@@ -117,7 +117,7 @@ class Path(pathlib_abc.ReadablePath):
     >>> a
     Path('mem/abcde.zip', 'a.txt')
     >>> b
-    Path('mem/abcde.zip', 'b/')
+    Path('mem/abcde.zip', 'b')
 
     name property:
 
