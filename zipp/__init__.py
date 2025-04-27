@@ -212,6 +212,8 @@ class PathInfo(pathlib_abc.PathInfo):
         return False
 
     def is_symlink(self):
+        if self.zip_info:
+            return stat.S_ISLNK(self.zip_info.external_attr >> 16)
         return False
 
 
@@ -431,11 +433,7 @@ class Path(pathlib_abc.ReadablePath):
         """
         Return whether this path is a symlink.
         """
-        info = self.info.zip_info
-        if not info:
-            return False
-        mode = info.external_attr >> 16
-        return stat.S_ISLNK(mode)
+        return self.info.is_symlink()
 
     def readlink(self):
         raise NotImplementedError

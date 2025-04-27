@@ -539,13 +539,6 @@ class TestPath(unittest.TestCase):
         assert root.joinpath('n.txt').is_symlink()
 
     @pass_alpharep
-    def test_info_is_symlink(self, alpharep):
-        root = zipfile.Path(alpharep)
-        assert not root.joinpath('missing').is_symlink()
-        assert not root.joinpath('a.txt').info.is_symlink()
-        assert not root.joinpath('n.txt').info.is_symlink()
-
-    @pass_alpharep
     def test_relative_to(self, alpharep):
         root = zipfile.Path(alpharep)
         relative = root.joinpath("b", "c.txt").relative_to(root / "b")
