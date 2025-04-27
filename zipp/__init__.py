@@ -288,14 +288,7 @@ class Path(pathlib_abc.ReadablePath):
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        # return (self / name for name in self.info.children)
-        # FIXME: This rigmarole is a workaround for #130.
-        names1 = []
-        names2 = []
-        for name, info in self.info.children.items():
-            names = names1 if info.zip_info else names2
-            names.append(name)
-        return (self / name for name in names1 + names2)
+        return (self / name for name in self.info.children)
 
     def match(self, path_pattern):
         return pathlib.PurePosixPath(self.at).match(path_pattern)
