@@ -214,6 +214,8 @@ class TestPath(unittest.TestCase):
         zf = zipfile.Path(alpharep)
         with self.assertRaises(IsADirectoryError):
             zf.joinpath('b').open()
+        with self.assertRaises(IsADirectoryError):
+            zf.joinpath('b').open('w')
 
     @pass_alpharep
     def test_open_binary_invalid_args(self, alpharep):
@@ -532,8 +534,16 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_is_symlink(self, alpharep):
         root = zipfile.Path(alpharep)
+        assert not root.joinpath('missing').is_symlink()
         assert not root.joinpath('a.txt').is_symlink()
         assert root.joinpath('n.txt').is_symlink()
+
+    @pass_alpharep
+    def test_info_is_symlink(self, alpharep):
+        root = zipfile.Path(alpharep)
+        assert not root.joinpath('missing').is_symlink()
+        assert not root.joinpath('a.txt').info.is_symlink()
+        assert not root.joinpath('n.txt').info.is_symlink()
 
     @pass_alpharep
     def test_relative_to(self, alpharep):
