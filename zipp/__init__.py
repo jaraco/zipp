@@ -48,7 +48,7 @@ class PathInfo(pathlib_abc.PathInfo):
         return length
 
     def append(self, zip_info):
-        self.resolve(zip_info.filename, True).zip_info = zip_info
+        self.resolve(zip_info.filename, create=True).zip_info = zip_info
 
     def resolve(self, path, create=False):
         if not path:
