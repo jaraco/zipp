@@ -9,6 +9,7 @@ import time
 import unittest
 
 import jaraco.itertools
+from jaraco.functools import compose
 
 from zipp.compat.overlay import zipfile
 
@@ -71,7 +72,7 @@ def build_alpharep_fixture():
 
 alpharep_generators = [
     Invoked.wrap(build_alpharep_fixture),
-    # Invoked.wrap(compose(zipfile._path.CompleteDirs.inject, build_alpharep_fixture)),
+    Invoked.wrap(compose(zipfile._path.CompleteDirs.inject, build_alpharep_fixture)),
 ]
 
 pass_alpharep = parameterize(['alpharep'], alpharep_generators)
