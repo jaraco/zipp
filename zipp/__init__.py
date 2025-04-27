@@ -333,6 +333,7 @@ class Path(pathlib_abc.ReadablePath):
         original type, the caller should either create a
         separate ZipFile object or pass a filename.
         """
+        self._initial_arg = root
         if not isinstance(root, zipfile.ZipFile):
             root = zipfile.ZipFile(root)
         if not isinstance(root.filelist, PathInfo):
@@ -354,7 +355,7 @@ class Path(pathlib_abc.ReadablePath):
         return hash((self.root, self.at))
 
     def __reduce__(self):
-        return (self.__class__, (self.root.filename, self.at))
+        return self.__class__, (self._initial_arg, self.at)
 
     def open(self, mode='r', *args, pwd=None, **kwargs):
         """
@@ -409,7 +410,9 @@ class Path(pathlib_abc.ReadablePath):
 
     def with_segments(self, *pathsegments):
         at = posixpath.join(*pathsegments)
-        return self.__class__(self.root, at)
+        path = self.__class__(self.root, at)
+        path._initial_arg = self._initial_arg
+        return path
 
     def is_dir(self):
         return self.info.is_dir()
