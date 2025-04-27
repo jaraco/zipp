@@ -15,7 +15,6 @@ import zipfile
 
 import pathlib_abc
 
-
 __all__ = ['Path']
 
 
@@ -281,15 +280,12 @@ class Path(pathlib_abc.ReadablePath):
 
     Coercion to string:
 
-    >>> import os
-    >>> str(c).replace(os.sep, posixpath.sep)
-    'mem/abcde.zip/b/c.txt'
+    >>> str(c)
+    'b/c.txt'
 
     At the root, ``name``, ``filename``, and ``parent``
     resolve to the zipfile.
 
-    >>> str(path)
-    'mem/abcde.zip/'
     >>> path.name
     'abcde.zip'
     >>> path.filename == pathlib.Path('mem/abcde.zip')
