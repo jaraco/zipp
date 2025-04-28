@@ -232,7 +232,7 @@ class TestPath(unittest.TestCase):
         """
         zf = zipfile.Path(alpharep)
         with self.assertRaises(FileNotFoundError):
-            zf.joinpath('z').open()
+            zf.joinpath('z').open(encoding='utf-8')
 
     @pass_alpharep
     def test_read(self, alpharep):

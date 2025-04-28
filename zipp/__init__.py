@@ -15,6 +15,8 @@ import zipfile
 
 import pathlib_abc
 
+from .compat.py310 import text_encoding
+
 __all__ = ['Path']
 
 
@@ -355,28 +357,28 @@ class Path(pathlib_abc.ReadablePath):
     def __reduce__(self):
         return self.__class__, (self._initial_arg, self.at)
 
-    def open(self, mode='r', *args, pwd=None, **kwargs):
+    def open(self, mode='r', encoding=None, errors=None, newline=None, pwd=None):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
+        if self.is_dir():
+            raise IsADirectoryError(self)
+        elif 'b' not in mode:
+            encoding = text_encoding(encoding)
         old_pwd, self.root.pwd = self.root.pwd, pwd
         try:
-            return pathlib_abc.magic_open(self, mode, -1, *args, **kwargs)
+            return pathlib_abc.magic_open(self, mode, -1, encoding, errors, newline)
         finally:
             self.root.pwd = old_pwd
 
     def __open_rb__(self, buffering=-1):
-        if self.is_dir():
-            raise IsADirectoryError(self)
-        elif not self.exists():
+        if not self.exists():
             raise FileNotFoundError(self)
         return self.root.open(self.info.zip_info, 'r')
 
     def __open_wb__(self, buffering=-1):
-        if self.is_dir():
-            raise IsADirectoryError(self)
         return self.root.open(self.at, 'w')
 
     def _base(self):
