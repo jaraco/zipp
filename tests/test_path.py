@@ -478,12 +478,16 @@ class TestPath(unittest.TestCase):
         root = zipfile.Path(alpharep)
         assert list(root.glob('b')) == [zipfile.Path(alpharep, "b")]
         assert list(root.glob('b*')) == [zipfile.Path(alpharep, "b")]
+        assert list(root.glob('b/')) == [zipfile.Path(alpharep, "b/")]
+        assert list(root.glob('b*/')) == [zipfile.Path(alpharep, "b/")]
 
     @pass_alpharep
     def test_glob_subdir(self, alpharep):
         root = zipfile.Path(alpharep)
         assert list(root.glob('g/h')) == [zipfile.Path(alpharep, "g/h")]
         assert list(root.glob('g*/h*')) == [zipfile.Path(alpharep, "g/h")]
+        assert list(root.glob('g/h/')) == [zipfile.Path(alpharep, "g/h/")]
+        assert list(root.glob('g*/h*/')) == [zipfile.Path(alpharep, "g/h/")]
 
     @pass_alpharep
     def test_glob_subdirs(self, alpharep):
