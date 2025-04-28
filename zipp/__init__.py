@@ -164,6 +164,8 @@ class PathInfo(pathlib_abc.PathInfo):
     :meth:`~object.__len__` methods that traverse the tree.
     """
 
+    __slots__ = ('_exists', 'zip_info', 'children')
+
     def __init__(self, items=tuple(), exists=True):
         self._exists = exists
         self.zip_info = None
@@ -320,6 +322,7 @@ class Path(pathlib_abc.ReadablePath):
     >>> pass
     """
 
+    __slots__ = ('_initial_arg', 'root', 'at')
     __repr = "{self.__class__.__name__}({self.root.filename!r}, {self.at!r})"
     parser = posixpath
 
