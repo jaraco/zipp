@@ -539,6 +539,12 @@ class TestPath(unittest.TestCase):
         assert root.joinpath('n.txt').is_symlink()
 
     @pass_alpharep
+    def test_readlink(self, alpharep):
+        root = zipfile.Path(alpharep)
+        with self.assertRaises(NotImplementedError):
+            root.readlink()
+
+    @pass_alpharep
     def test_relative_to(self, alpharep):
         root = zipfile.Path(alpharep)
         relative = root.joinpath("b", "c.txt").relative_to(root / "b")
