@@ -1,5 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.2", "setuptools_scm[toml]>=3.4.1"]
+requires = [
+	"setuptools>=61.2", 
+	"setuptools_scm[toml]>=3.4.1",
+	# Limit the max version of setuptools_scm on older Python to prevent circular
+	# dependencies. See: https://github.com/jaraco/zipp/issues/137
+	"setuptools_scm[toml]<8.3.0; python_version < '3.10'",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
