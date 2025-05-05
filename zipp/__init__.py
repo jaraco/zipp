@@ -15,6 +15,7 @@ import zipfile
 
 import pathlib_abc
 
+from ._functools import save_method_args
 from .compat.py310 import text_encoding
 
 __all__ = ['Path']
@@ -78,7 +79,24 @@ def _difference(minuend, subtrahend):
     return itertools.filterfalse(set(subtrahend).__contains__, minuend)
 
 
-class CompleteDirs(zipfile.ZipFile):
+class InitializedState:
+    """
+    Mix-in to save the initialization state for pickling.
+    """
+
+    @save_method_args
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __getstate__(self):
+        return self._saved___init__.args, self._saved___init__.kwargs
+
+    def __setstate__(self, state):
+        args, kwargs = state
+        super().__init__(*args, **kwargs)
+
+
+class CompleteDirs(InitializedState, zipfile.ZipFile):
     """
     A ZipFile subclass that ensures that implied directories
     are always included in the namelist.
