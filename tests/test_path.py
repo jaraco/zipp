@@ -603,7 +603,7 @@ class TestPath(unittest.TestCase):
         """
         Path should handle malformed paths gracefully.
 
-        Leading slashes are ignored.
+        Paths with leading slashes are not visible.
 
         Paths with dots are treated like regular files.
         """
@@ -614,11 +614,7 @@ class TestPath(unittest.TestCase):
         zf.writestr("../parent.txt", b"content")
         zf.filename = ''
         root = zipfile.Path(zf)
-        assert list(map(str, root.iterdir())) == [
-            'one-slash.txt',
-            'two-slash.txt',
-            '..',
-        ]
+        assert list(map(str, root.iterdir())) == ['..']
         assert root.joinpath('..').joinpath('parent.txt').read_bytes() == b'content'
 
     def test_unsupported_names(self):

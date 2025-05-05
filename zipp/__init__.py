@@ -232,9 +232,7 @@ class PathInfo(pathlib_abc.PathInfo):
         if not path:
             return self
         name, _, path = path.partition('/')
-        if not name:
-            info = self
-        elif name in self.children:
+        if name in self.children:
             info = self.children[name]
         elif create:
             info = self.children[name] = PathInfo()
@@ -469,7 +467,7 @@ class Path(pathlib_abc.ReadablePath):
     def iterdir(self):
         if not self.is_dir():
             raise ValueError("Can't listdir a file")
-        return (self / name for name in self.info.children)
+        return (self / name for name in self.info.children if name)
 
     def match(self, path_pattern):
         return pathlib.PurePosixPath(self.at).match(path_pattern)
