@@ -7,6 +7,7 @@ https://github.com/python/importlib_metadata/wiki/Development-Methodology
 for more detail.
 """
 
+import functools
 import itertools
 import pathlib
 import posixpath
@@ -169,6 +170,27 @@ class CompleteDirs(InitializedState, zipfile.ZipFile):
         for name in cls._implied_dirs(zf.namelist()):
             zf.writestr(name, b"")
         return zf
+
+
+class FastLookup(CompleteDirs):
+    """
+    ZipFile subclass to ensure implicit
+    dirs exist and are resolved rapidly.
+    """
+
+    def namelist(self):
+        return self._namelist
+
+    @functools.cached_property
+    def _namelist(self):
+        return super().namelist()
+
+    def _name_set(self):
+        return self._name_set_prop
+
+    @functools.cached_property
+    def _name_set_prop(self):
+        return super()._name_set()
 
 
 class PathInfo(pathlib_abc.PathInfo):
