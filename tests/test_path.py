@@ -356,6 +356,7 @@ class TestPath(unittest.TestCase):
         """
         The name of the root should be the name of the zipfile
         """
+        alpharep = self.zipfile_ondisk(alpharep)
         root = zipfile.Path(alpharep)
         assert root.name == 'alpharep.zip' == root.filename.name
 
@@ -412,6 +413,7 @@ class TestPath(unittest.TestCase):
         """
         The final path component, without its suffix
         """
+        alpharep = self.zipfile_ondisk(alpharep)
         root = zipfile.Path(alpharep)
         assert root.stem == 'alpharep' == root.filename.stem
 
