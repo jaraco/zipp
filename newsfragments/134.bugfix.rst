@@ -1,0 +1,3 @@
+``str(Path(...))`` now returns the same value as ``Path.at``. Previously it
+joined the backing ``ZipFile.filename`` to the member path, and failed with
+``TypeError`` if the zip file object wasn't backed by a named file.
