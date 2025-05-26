@@ -5,7 +5,6 @@ import pathlib
 import pickle
 import stat
 import sys
-import time
 import unittest
 
 import jaraco.itertools
@@ -15,6 +14,7 @@ from zipp.compat.overlay import zipfile
 
 from ._test_params import Invoked, parameterize
 from .compat.py39.os_helper import FakePath, temp_dir  # type: ignore[import-not-found]
+from .compat.py313 import ForArchive
 
 
 def _make_link(info: zipfile.ZipInfo):  # type: ignore[name-defined]
@@ -628,7 +628,7 @@ class TestPath(unittest.TestCase):
         """
         data = io.BytesIO()
         zf = zipfile.ZipFile(data, "w")
-        zf.writestr(DirtyZipInfo.for_name("foo\\bar", zf), b"content")
+        zf.writestr(DirtyZipInfo("foo\\bar")._for_archive(zf), b"content")
         zf.filename = ''
         root = zipfile.Path(zf)
         (first,) = root.iterdir()
@@ -643,7 +643,7 @@ class TestPath(unittest.TestCase):
         assert isinstance(zf, Traversable)
 
 
-class DirtyZipInfo(zipfile.ZipInfo):
+class DirtyZipInfo(zipfile.ZipInfo, ForArchive):
     """
     Bypass name sanitization.
     """
@@ -651,20 +651,3 @@ class DirtyZipInfo(zipfile.ZipInfo):
     def __init__(self, filename, *args, **kwargs):
         super().__init__(filename, *args, **kwargs)
         self.filename = filename
-
-    @classmethod
-    def for_name(cls, name, archive):
-        """
-        Construct the same way that ZipFile.writestr does.
-
-        TODO: extract this functionality and re-use
-        """
-        self = cls(filename=name, date_time=time.localtime(time.time())[:6])
-        self.compress_type = archive.compression
-        self.compress_level = archive.compresslevel
-        if self.filename.endswith('/'):  # pragma: no cover
-            self.external_attr = 0o40775 << 16  # drwxrwxr-x
-            self.external_attr |= 0x10  # MS-DOS directory flag
-        else:
-            self.external_attr = 0o600 << 16  # ?rw-------
-        return self
