@@ -423,7 +423,7 @@ class Path(pathlib_abc.ReadablePath):
         return self.root.open(self.at, 'w')
 
     def _base(self):
-        return super() if self.at else pathlib.PurePosixPath(self.root.filename)
+        return super() if self.at else self.filename
 
     @property
     def name(self):
