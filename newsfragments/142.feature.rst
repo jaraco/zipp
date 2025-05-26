@@ -1,1 +1,0 @@
-Backported simplified tests from python/cpython#123424.
