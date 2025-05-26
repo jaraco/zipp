@@ -14,6 +14,7 @@ from zipp.compat.overlay import zipfile
 
 from ._test_params import Invoked, parameterize
 from .compat.py39.os_helper import FakePath, temp_dir  # type: ignore[import-not-found]
+from .compat.py313 import ForArchive
 
 
 def _make_link(info: zipfile.ZipInfo):  # type: ignore[name-defined]
@@ -642,7 +643,7 @@ class TestPath(unittest.TestCase):
         assert isinstance(zf, Traversable)
 
 
-class DirtyZipInfo(zipfile.ZipInfo):
+class DirtyZipInfo(zipfile.ZipInfo, ForArchive):
     """
     Bypass name sanitization.
     """
