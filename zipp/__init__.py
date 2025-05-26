@@ -356,11 +356,7 @@ class Path:
         return io.TextIOWrapper(stream, encoding, *args, **kwargs)
 
     def _base(self):
-        return (
-            pathlib.PurePosixPath(self.at)
-            if self.at
-            else pathlib.PurePath(self.root.filename)
-        )
+        return pathlib.PurePosixPath(self.at) if self.at else self.filename
 
     @property
     def name(self):
