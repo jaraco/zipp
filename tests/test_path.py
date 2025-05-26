@@ -360,6 +360,17 @@ class TestPath(unittest.TestCase):
         assert root.name == 'alpharep.zip' == root.filename.name
 
     @pass_alpharep
+    def test_root_on_disk(self, alpharep):
+        """
+        The name/stem of the root should match the zipfile on disk.
+
+        This condition must hold across platforms.
+        """
+        root = zipfile.Path(self.zipfile_ondisk(alpharep))
+        assert root.name == 'alpharep.zip' == root.filename.name
+        assert root.stem == 'alpharep' == root.filename.stem
+
+    @pass_alpharep
     def test_suffix(self, alpharep):
         """
         The suffix of the root should be the suffix of the zipfile.

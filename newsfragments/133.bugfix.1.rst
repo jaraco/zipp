@@ -1,0 +1,1 @@
+Fixed ``.name``, ``.stem``, and other basename-based properties on Windows when working with a zipfile on disk.
