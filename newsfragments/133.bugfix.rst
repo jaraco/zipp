@@ -1,1 +1,0 @@
-Use Windows path rules to parse ``ZipFile.filename`` on Windows
