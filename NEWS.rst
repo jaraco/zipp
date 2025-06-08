@@ -1,3 +1,12 @@
+v3.23.0
+=======
+
+Features
+--------
+
+- Add a compatibility shim for Python 3.13 and earlier. (#145)
+
+
 v3.22.0
 =======
 
