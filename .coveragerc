@@ -2,6 +2,7 @@
 omit =
 	# leading `*/` for pytest-dev/pytest-cov#456
 	*/.tox/*
+	zipp/compat/py313.py
 disable_warnings =
 	couldnt-parse
 
