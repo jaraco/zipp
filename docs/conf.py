@@ -47,6 +47,7 @@ nitpick_ignore: list[tuple[str, str]] = []
 extensions += ['sphinx.ext.intersphinx']
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3', None),
+    'pathlib_abc': ('https://pathlib-abc.readthedocs.io/en/latest/', None),
 }
 
 # Preserve authored syntax for defaults
