@@ -14,7 +14,6 @@ import pathlib
 import posixpath
 import re
 import stat
-import sys
 import zipfile
 
 from ._functools import save_method_args
@@ -195,16 +194,6 @@ class FastLookup(CompleteDirs):
         return super()._name_set()
 
 
-def _extract_text_encoding(encoding=None, *args, **kwargs):
-    # compute stack level so that the caller of the caller sees any warning.
-    is_pypy = sys.implementation.name == 'pypy'
-    # PyPy no longer special cased after 7.3.19 (or maybe 7.3.18)
-    # See jaraco/zipp#143
-    is_old_pypi = is_pypy and sys.pypy_version_info < (7, 3, 19)
-    stack_level = 3 + is_old_pypi
-    return text_encoding(encoding, stack_level), args, kwargs
-
-
 class Path:
     """
     A :class:`importlib.resources.abc.Traversable` interface for zip files.
@@ -335,7 +324,7 @@ class Path:
     def __hash__(self):
         return hash((self.root, self.at))
 
-    def open(self, mode='r', *args, pwd=None, **kwargs):
+    def open(self, mode='r', encoding=None, errors=None, newline=None, pwd=None):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
@@ -348,12 +337,12 @@ class Path:
             raise FileNotFoundError(self)
         stream = self.root.open(self.at, zip_mode, pwd=pwd)
         if 'b' in mode:
-            if args or kwargs:
+            if encoding or errors or newline:
                 raise ValueError("encoding args invalid for binary operation")
             return stream
         # Text mode:
-        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        return io.TextIOWrapper(stream, encoding, *args, **kwargs)
+        encoding = text_encoding(encoding)
+        return io.TextIOWrapper(stream, encoding, errors, newline)
 
     def _base(self):
         return pathlib.PurePosixPath(self.at) if self.at else self.filename
@@ -378,9 +367,9 @@ class Path:
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
-    def read_text(self, *args, **kwargs):
-        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        with self.open('r', encoding, *args, **kwargs) as strm:
+    def read_text(self, encoding=None, errors=None, newline=None):
+        encoding = text_encoding(encoding)
+        with self.open('r', encoding, errors, newline) as strm:
             return strm.read()
 
     def read_bytes(self):
