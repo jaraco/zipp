@@ -96,11 +96,11 @@ class TestPath(unittest.TestCase):
     def test_iterdir_and_types(self, alpharep):
         root = zipfile.Path(alpharep)
         assert root.is_dir()
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = root.iterdir()
         assert a.is_file()
         assert b.is_dir()
         assert g.is_dir()
-        c, f, d = b.iterdir()
+        c, d, f = b.iterdir()
         assert c.is_file() and f.is_file()
         (e,) = d.iterdir()
         assert e.is_file()
@@ -116,7 +116,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_iterdir_on_file(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = root.iterdir()
         with self.assertRaises(ValueError):
             a.iterdir()
 
@@ -131,7 +131,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_open(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = root.iterdir()
         with a.open(encoding="utf-8") as strm:
             data = strm.read()
         self.assertEqual(data, "content of a")
@@ -214,6 +214,8 @@ class TestPath(unittest.TestCase):
         zf = zipfile.Path(alpharep)
         with self.assertRaises(IsADirectoryError):
             zf.joinpath('b').open()
+        with self.assertRaises(IsADirectoryError):
+            zf.joinpath('b').open('w')
 
     @pass_alpharep
     def test_open_binary_invalid_args(self, alpharep):
@@ -230,12 +232,12 @@ class TestPath(unittest.TestCase):
         """
         zf = zipfile.Path(alpharep)
         with self.assertRaises(FileNotFoundError):
-            zf.joinpath('z').open()
+            zf.joinpath('z').open(encoding='utf-8')
 
     @pass_alpharep
     def test_read(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = root.iterdir()
         assert a.read_text(encoding="utf-8") == "content of a"
         # Also check positional encoding arg (gh-101144).
         assert a.read_text("utf-8") == "content of a"
@@ -281,18 +283,19 @@ class TestPath(unittest.TestCase):
     def test_parent(self, alpharep):
         root = zipfile.Path(alpharep)
         assert (root / 'a').parent.at == ''
-        assert (root / 'a' / 'b').parent.at == 'a/'
+        assert (root / 'a' / 'b').parent.at == 'a'
 
     @pass_alpharep
     def test_dir_parent(self, alpharep):
         root = zipfile.Path(alpharep)
         assert (root / 'b').parent.at == ''
-        assert (root / 'b/').parent.at == ''
+        assert (root / 'b/').parent.at == 'b'
 
     @pass_alpharep
     def test_missing_dir_parent(self, alpharep):
         root = zipfile.Path(alpharep)
-        assert (root / 'missing dir/').parent.at == ''
+        assert (root / 'missing dir').parent.at == ''
+        assert (root / 'missing dir/').parent.at == 'missing dir'
 
     @pass_alpharep
     def test_mutability(self, alpharep):
@@ -301,7 +304,7 @@ class TestPath(unittest.TestCase):
         reflect that change.
         """
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = root.iterdir()
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
         assert any(child.name == 'foo.txt' for child in root.iterdir())
@@ -484,14 +487,18 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_glob_dirs(self, alpharep):
         root = zipfile.Path(alpharep)
-        assert list(root.glob('b')) == [zipfile.Path(alpharep, "b/")]
-        assert list(root.glob('b*')) == [zipfile.Path(alpharep, "b/")]
+        assert list(root.glob('b')) == [zipfile.Path(alpharep, "b")]
+        assert list(root.glob('b*')) == [zipfile.Path(alpharep, "b")]
+        assert list(root.glob('b/')) == [zipfile.Path(alpharep, "b/")]
+        assert list(root.glob('b*/')) == [zipfile.Path(alpharep, "b/")]
 
     @pass_alpharep
     def test_glob_subdir(self, alpharep):
         root = zipfile.Path(alpharep)
-        assert list(root.glob('g/h')) == [zipfile.Path(alpharep, "g/h/")]
-        assert list(root.glob('g*/h*')) == [zipfile.Path(alpharep, "g/h/")]
+        assert list(root.glob('g/h')) == [zipfile.Path(alpharep, "g/h")]
+        assert list(root.glob('g*/h*')) == [zipfile.Path(alpharep, "g/h")]
+        assert list(root.glob('g/h/')) == [zipfile.Path(alpharep, "g/h/")]
+        assert list(root.glob('g*/h*/')) == [zipfile.Path(alpharep, "g/h/")]
 
     @pass_alpharep
     def test_glob_subdirs(self, alpharep):
@@ -542,6 +549,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_is_symlink(self, alpharep):
         root = zipfile.Path(alpharep)
+        assert not root.joinpath('missing').is_symlink()
         assert not root.joinpath('a.txt').is_symlink()
         assert root.joinpath('n.txt').is_symlink()
 
@@ -611,7 +619,7 @@ class TestPath(unittest.TestCase):
         zf.writestr("../parent.txt", b"content")
         zf.filename = ''
         root = zipfile.Path(zf)
-        assert list(map(str, root.iterdir())) == ['../']
+        assert list(map(str, root.iterdir())) == ['..']
         assert root.joinpath('..').joinpath('parent.txt').read_bytes() == b'content'
 
     def test_unsupported_names(self):

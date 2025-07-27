@@ -23,6 +23,7 @@ classifiers = [
 requires-python = ">=3.9"
 license = "MIT"
 dependencies = [
+	"pathlib-abc"
 ]
 dynamic = ["version"]
 
