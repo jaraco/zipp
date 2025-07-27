@@ -185,7 +185,7 @@ class TestPath(unittest.TestCase):
     )
     @unittest.skipIf(
         sys.implementation.name == 'pypy' and sys.pypy_version_info < (7, 3, 19),
-        "Older PyPy versions set the wrong stacklevel in text_encoding()"
+        "Older PyPy versions set the wrong stacklevel in text_encoding()",
     )
     @pass_alpharep
     def test_encoding_warnings(self, alpharep):
