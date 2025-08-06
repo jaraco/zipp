@@ -184,7 +184,7 @@ class TestPath(unittest.TestCase):
         "Requires warn_default_encoding",
     )
     @unittest.skipIf(
-        sys.implementation.name == 'pypy' and sys.pypy_version_info < (7, 3, 19),
+        sys.implementation.name == 'pypy' and sys.pypy_version_info < (7, 3, 18),
         "Older PyPy versions set the wrong stacklevel in text_encoding()",
     )
     @pass_alpharep
