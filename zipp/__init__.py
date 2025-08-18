@@ -204,6 +204,10 @@ def _extract_text_encoding(encoding=None, *args, **kwargs):
     return text_encoding(encoding, stack_level), args, kwargs
 
 
+def none_as(value, replacement=None):
+    return replacement if value is None else value
+
+
 class Path:
     """
     A :class:`importlib.resources.abc.Traversable` interface for zip files.
@@ -268,12 +272,15 @@ class Path:
 
     Coercion to string:
 
-    >>> str(c)
-    'b/c.txt'
+    >>> import os
+    >>> str(c).replace(os.sep, posixpath.sep)
+    'mem/abcde.zip/b/c.txt'
 
     At the root, ``name``, ``filename``, and ``parent``
     resolve to the zipfile.
 
+    >>> str(path)
+    'mem/abcde.zip'
     >>> path.name
     'abcde.zip'
     >>> path.filename == pathlib.Path('mem/abcde.zip')
@@ -431,7 +438,8 @@ class Path:
         return posixpath.relpath(str(self), str(other.joinpath(*extra)))
 
     def __str__(self):
-        return self.at
+        root = none_as(self.root.filename, ':zipfile:')
+        return posixpath.join(root, self.at) if self.at else root
 
     def __repr__(self):
         return self.__repr.format(self=self)
