@@ -20,7 +20,7 @@ import zipfile
 from .compat.py310 import text_encoding
 from .glob import Translator
 
-from ._functools import save_method_args
+from ._functools import save_method_args, none_as
 
 
 __all__ = ['Path']
@@ -202,10 +202,6 @@ def _extract_text_encoding(encoding=None, *args, **kwargs):
     is_pypy = sys.implementation.name == 'pypy'
     stack_level = 3 + is_pypy
     return text_encoding(encoding, stack_level), args, kwargs
-
-
-def none_as(value, replacement=None):
-    return replacement if value is None else value
 
 
 class Path:
