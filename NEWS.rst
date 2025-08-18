@@ -1,3 +1,12 @@
+v3.23.1
+=======
+
+Bugfixes
+--------
+
+- ``str(Path(...))`` now renders ":zipfile" for the filename when a zipfile has no filename instead of failing with a TypeError. (#134)
+
+
 v3.23.0
 =======
 
