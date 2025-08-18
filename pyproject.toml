@@ -1,5 +1,10 @@
 [build-system]
-requires = ["setuptools>=61.2", "setuptools_scm[toml]>=3.4.1"]
+requires = [
+	"setuptools>=77",
+	"setuptools_scm[toml]>=3.4.1",
+	# jaraco/skeleton#174
+	"coherent.licensed",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -12,11 +17,11 @@ readme = "README.rst"
 classifiers = [
 	"Development Status :: 5 - Production/Stable",
 	"Intended Audience :: Developers",
-	"License :: OSI Approved :: MIT License",
 	"Programming Language :: Python :: 3",
 	"Programming Language :: Python :: 3 :: Only",
 ]
 requires-python = ">=3.9"
+license = "MIT"
 dependencies = [
 ]
 dynamic = ["version"]
@@ -36,7 +41,6 @@ test = [
 	"big-O",
 	"pytest-ignore-flaky",
 	"jaraco.test",
-	"importlib_resources; python_version < '3.9'",
 ]
 
 doc = [

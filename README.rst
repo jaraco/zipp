@@ -7,7 +7,7 @@
    :target: https://github.com/jaraco/zipp/actions?query=workflow%3A%22tests%22
    :alt: tests
 
-.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v2.json
+.. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
     :target: https://github.com/astral-sh/ruff
     :alt: Ruff
 
@@ -37,6 +37,8 @@ were contributed to different versions in the standard library:
 
    * - zipp
      - stdlib
+   * - 3.21
+     - 3.15
    * - 3.18
      - 3.13
    * - 3.16

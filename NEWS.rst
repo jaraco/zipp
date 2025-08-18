@@ -1,3 +1,27 @@
+v3.23.0
+=======
+
+Features
+--------
+
+- Add a compatibility shim for Python 3.13 and earlier. (#145)
+
+
+v3.22.0
+=======
+
+Features
+--------
+
+- Backported simplified tests from python/cpython#123424. (#142)
+
+
+Bugfixes
+--------
+
+- Fixed ``.name``, ``.stem``, and other basename-based properties on Windows when working with a zipfile on disk. (#133)
+
+
 v3.21.0
 =======
 
