@@ -194,6 +194,11 @@ class FastLookup(CompleteDirs):
         return super()._name_set()
 
 
+def _extract_text_encoding(encoding=None, *args, **kwargs):
+    stack_level = 3
+    return text_encoding(encoding, stack_level), args, kwargs
+
+
 class Path:
     """
     A :class:`importlib.resources.abc.Traversable` interface for zip files.
@@ -324,7 +329,7 @@ class Path:
     def __hash__(self):
         return hash((self.root, self.at))
 
-    def open(self, mode='r', encoding=None, errors=None, newline=None, pwd=None):
+    def open(self, mode='r', *args, pwd=None, **kwargs):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
@@ -337,12 +342,12 @@ class Path:
             raise FileNotFoundError(self)
         stream = self.root.open(self.at, zip_mode, pwd=pwd)
         if 'b' in mode:
-            if encoding or errors or newline:
+            if args or kwargs:
                 raise ValueError("encoding args invalid for binary operation")
             return stream
         # Text mode:
-        encoding = text_encoding(encoding)
-        return io.TextIOWrapper(stream, encoding, errors, newline)
+        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
+        return io.TextIOWrapper(stream, encoding, *args, **kwargs)
 
     def _base(self):
         return pathlib.PurePosixPath(self.at) if self.at else self.filename
@@ -367,9 +372,9 @@ class Path:
     def filename(self):
         return pathlib.Path(self.root.filename).joinpath(self.at)
 
-    def read_text(self, encoding=None, errors=None, newline=None):
-        encoding = text_encoding(encoding)
-        with self.open('r', encoding, errors, newline) as strm:
+    def read_text(self, *args, **kwargs):
+        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
+        with self.open('r', encoding, *args, **kwargs) as strm:
             return strm.read()
 
     def read_bytes(self):
