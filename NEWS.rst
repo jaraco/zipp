@@ -1,3 +1,12 @@
+v4.0.0
+======
+
+Deprecations and Removals
+-------------------------
+
+- Drop workaround for stacklevel bug on older PyPy releases. (#149)
+
+
 v3.23.1
 =======
 
