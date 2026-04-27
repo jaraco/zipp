@@ -117,7 +117,7 @@ class TestPath(unittest.TestCase):
     def test_iterdir_on_file(self, alpharep):
         root = zipfile.Path(alpharep)
         a, n, b, g, j = root.iterdir()
-        with self.assertRaises(ValueError):
+        with self.assertRaises(NotADirectoryError):
             a.iterdir()
 
     @pass_alpharep
