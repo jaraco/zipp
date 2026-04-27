@@ -398,7 +398,7 @@ class Path:
 
     def iterdir(self):
         if not self.is_dir():
-            raise ValueError("Can't listdir a file")
+            raise NotADirectoryError("Can't listdir a file")
         subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)
 
