@@ -64,7 +64,25 @@ class Translator:
         '.*/[^/][^/]*'
         """
         self.restrict_rglob(pattern)
-        return ''.join(map(self.replace, separate(self.star_not_empty(pattern))))
+        return ''.join(
+            map(self.replace, separate(self.star_not_empty(self.consolidate(pattern))))
+        )
+
+    def consolidate(self, pattern):
+        r"""
+        Collapse runs of consecutive ``**`` segments into one.
+
+        ``**/**`` is equivalent to ``**`` but each ``**`` becomes ``.*``,
+        so adjacent ``.*`` separated by a slash make matching ambiguous and
+        a pattern like ``**/**/**/...`` backtracks catastrophically.
+
+        >>> Translator(seps='/').consolidate('**/**/a')
+        '**/a'
+        >>> Translator(seps='/').consolidate('a/**/**/b')
+        'a/**/b'
+        """
+        seps_pattern = rf'[{re.escape(self.seps)}]+'
+        return re.sub(rf'\*\*(?:{seps_pattern}\*\*)+', '**', pattern)
 
     def replace(self, match):
         """
