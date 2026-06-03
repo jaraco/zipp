@@ -5,6 +5,7 @@ import pathlib
 import pickle
 import stat
 import sys
+import time
 import unittest
 
 import jaraco.itertools
@@ -544,6 +545,19 @@ class TestPath(unittest.TestCase):
         root = zipfile.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
         with self.assertRaises(ValueError):
             root.glob('')
+
+    def test_glob_many_stars(self):
+        """
+        A pattern with many ``*`` in one segment must not backtrack
+        exponentially against a non-matching name.
+        """
+        zf = zipfile.ZipFile(io.BytesIO(), 'w')
+        zf.writestr('a' * 40, b'')
+        root = zipfile.Path(zf)
+        pattern = '*a' * 25 + '.txt'
+        start = time.monotonic()
+        assert list(root.glob(pattern)) == []
+        assert time.monotonic() - start < 2
 
     @pass_alpharep
     def test_eq_hash(self, alpharep):

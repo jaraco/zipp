@@ -64,19 +64,66 @@ class Translator:
         '.*/[^/][^/]*'
         """
         self.restrict_rglob(pattern)
-        return ''.join(map(self.replace, separate(self.star_not_empty(pattern))))
+        return self.assemble(self.tokenize(self.star_not_empty(pattern)))
 
-    def replace(self, match):
+    def tokenize(self, pattern):
         """
-        Perform the replacements for a match from :func:`separate`.
+        Yield (greedy, regex) pairs for each piece of pattern, where
+        greedy marks a ``*`` whose ``[^/]*`` may backtrack against a
+        neighboring ``*`` in the same path segment.
         """
-        return match.group('set') or (
-            re
-            .escape(match.group(0))
-            .replace('\\*\\*', r'.*')
-            .replace('\\*', rf'[^{re.escape(self.seps)}]*')
-            .replace('\\?', r'[^/]')
-        )
+        for match in separate(pattern):
+            captured = match.group('set')
+            if captured:
+                yield False, captured
+                continue
+            text = match.group(0)
+            i = 0
+            while i < len(text):
+                if text.startswith('**', i):
+                    yield False, r'.*'
+                    i += 2
+                elif text[i] == '*':
+                    yield True, rf'[^{re.escape(self.seps)}]*'
+                    i += 1
+                elif text[i] == '?':
+                    yield False, r'[^/]'
+                    i += 1
+                else:
+                    yield False, re.escape(text[i])
+                    i += 1
+
+    def assemble(self, tokens):
+        """
+        Join translated tokens into a regex.
+
+        When two ``*`` stars sit in the same path segment, the leading
+        one is committed with an atomic group so that ``*a*a*...`` can no
+        longer backtrack exponentially against a non-matching name.
+        """
+        tokens = list(tokens)
+        res = []
+        i = 0
+        while i < len(tokens):
+            greedy, regex = tokens[i]
+            if not greedy:
+                res.append(regex)
+                i += 1
+                continue
+            j = i + 1
+            fixed = []
+            while j < len(tokens) and not tokens[j][0] and '/' not in tokens[j][1]:
+                fixed.append(tokens[j][1])
+                j += 1
+            if j < len(tokens) and tokens[j][0]:
+                name = f'g{len(res)}'
+                res.append(f'(?=(?P<{name}>{regex}?{"".join(fixed)}))(?P={name})')
+                i = j
+            else:
+                res.append(regex)
+                res.extend(fixed)
+                i = j
+        return ''.join(res)
 
     def restrict_rglob(self, pattern):
         """
