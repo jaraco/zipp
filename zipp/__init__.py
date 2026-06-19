@@ -329,12 +329,17 @@ class Path:
     def __hash__(self):
         return hash((self.root, self.at))
 
-    def open(self, mode='r', *args, pwd=None, **kwargs):
+    def open(self, mode='r', buffering=-1, *args, pwd=None, **kwargs):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
+        if not isinstance(buffering, int):
+            args = (buffering, *args)
+            buffering = -1
+        elif buffering < -1:
+            raise ValueError("invalid buffering size")
         if self.is_dir():
             raise IsADirectoryError(self)
         zip_mode = mode[0]
@@ -347,6 +352,10 @@ class Path:
             return stream
         # Text mode:
         encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
+        if buffering == 0:
+            raise ValueError("can't have unbuffered text I/O")
+        if buffering == 1 and len(args) < 3:
+            kwargs.setdefault('line_buffering', True)
         return io.TextIOWrapper(stream, encoding, *args, **kwargs)
 
     def _base(self):
