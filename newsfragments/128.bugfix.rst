@@ -1,0 +1,1 @@
+Align ``Path.open`` positional arguments with ``pathlib.Path.open`` while preserving the legacy positional encoding form.

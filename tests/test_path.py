@@ -1,4 +1,5 @@
 import contextlib
+import inspect
 import io
 import itertools
 import pathlib
@@ -138,6 +139,15 @@ class TestPath(unittest.TestCase):
         with a.open('r', "utf-8") as strm:  # not a kw, no gh-101144 TypeError
             data = strm.read()
         self.assertEqual(data, "content of a")
+        with a.open('r', 1) as strm:
+            data = strm.read()
+        self.assertEqual(data, "content of a")
+
+    def test_open_signature_matches_pathlib(self):
+        path_params = inspect.signature(pathlib.Path.open).parameters
+        zip_params = inspect.signature(zipfile.Path.open).parameters
+
+        assert list(zip_params)[:6] == list(path_params)
 
     def test_open_encoding_utf16(self):
         in_memory_file = io.BytesIO()
