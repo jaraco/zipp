@@ -78,6 +78,16 @@ alpharep_generators = [
 pass_alpharep = parameterize(['alpharep'], alpharep_generators)
 
 
+def unordered(children):
+    """Sort ``iterdir()`` results by name.
+
+    ``Path.iterdir()`` order is arbitrary and not part of its contract, so
+    tests that don't specifically exercise ordering should not rely on it
+    (gh-130). Ordering guarantees are captured by a dedicated test instead.
+    """
+    return sorted(children, key=lambda path: path.name)
+
+
 class TestPath(unittest.TestCase):
     def setUp(self):
         self.fixtures = contextlib.ExitStack()
@@ -96,17 +106,35 @@ class TestPath(unittest.TestCase):
     def test_iterdir_and_types(self, alpharep):
         root = zipfile.Path(alpharep)
         assert root.is_dir()
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = unordered(root.iterdir())
         assert a.is_file()
         assert b.is_dir()
         assert g.is_dir()
-        c, f, d = b.iterdir()
+        c, d, f = unordered(b.iterdir())
         assert c.is_file() and f.is_file()
         (e,) = d.iterdir()
         assert e.is_file()
         (h,) = g.iterdir()
         (i,) = h.iterdir()
         assert i.is_file()
+
+    @pass_alpharep
+    def test_iterdir_order(self, alpharep):
+        """Capture the iterdir ordering explicitly.
+
+        The order is incidental (it follows the order of entries in the zip)
+        and not part of the ``iterdir()`` contract, but capturing it here means
+        a change to it surfaces in this dedicated test rather than silently
+        breaking unrelated tests (gh-130).
+        """
+        root = zipfile.Path(alpharep)
+        assert [child.name for child in root.iterdir()] == [
+            'a.txt',
+            'n.txt',
+            'b',
+            'g',
+            'j',
+        ]
 
     @pass_alpharep
     def test_is_file_missing(self, alpharep):
@@ -116,7 +144,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_iterdir_on_file(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = unordered(root.iterdir())
         with self.assertRaises(NotADirectoryError):
             a.iterdir()
 
@@ -131,7 +159,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_open(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = unordered(root.iterdir())
         with a.open(encoding="utf-8") as strm:
             data = strm.read()
         self.assertEqual(data, "content of a")
@@ -239,7 +267,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_read(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = unordered(root.iterdir())
         assert a.read_text(encoding="utf-8") == "content of a"
         # Also check positional encoding arg (gh-101144).
         assert a.read_text("utf-8") == "content of a"
@@ -305,7 +333,7 @@ class TestPath(unittest.TestCase):
         reflect that change.
         """
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, b, g, j, n = unordered(root.iterdir())
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
         assert any(child.name == 'foo.txt' for child in root.iterdir())
@@ -645,9 +673,8 @@ class TestPath(unittest.TestCase):
         zf.writestr("V: NMS.flac", b"fLaC...")
         zf.filename = ''
         root = zipfile.Path(zf)
-        contents = root.iterdir()
-        assert next(contents).name == 'path?'
-        assert next(contents).name == 'V: NMS.flac'
+        names = {child.name for child in root.iterdir()}
+        assert names == {'path?', 'V: NMS.flac'}
         assert root.joinpath('V: NMS.flac').read_bytes() == b"fLaC..."
 
     def test_backslash_not_separator(self):
