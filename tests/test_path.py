@@ -96,15 +96,16 @@ class TestPath(unittest.TestCase):
     def test_iterdir_and_types(self, alpharep):
         root = zipfile.Path(alpharep)
         assert root.is_dir()
-        a, n, b, g, j = root.iterdir()
-        assert a.is_file()
-        assert b.is_dir()
-        assert g.is_dir()
-        c, f, d = b.iterdir()
-        assert c.is_file() and f.is_file()
-        (e,) = d.iterdir()
+        # Order of iterdir() is not guaranteed (issue #130).
+        children = {p.name: p for p in root.iterdir()}
+        assert children['a.txt'].is_file()
+        assert children['b'].is_dir()
+        assert children['g'].is_dir()
+        b_children = {p.name: p for p in children['b'].iterdir()}
+        assert b_children['c.txt'].is_file() and b_children['f.txt'].is_file()
+        (e,) = b_children['d'].iterdir()
         assert e.is_file()
-        (h,) = g.iterdir()
+        (h,) = children['g'].iterdir()
         (i,) = h.iterdir()
         assert i.is_file()
 
@@ -116,9 +117,9 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_iterdir_on_file(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        children = {p.name: p for p in root.iterdir()}
         with self.assertRaises(NotADirectoryError):
-            a.iterdir()
+            children['a.txt'].iterdir()
 
     @pass_alpharep
     def test_subdir_is_dir(self, alpharep):
