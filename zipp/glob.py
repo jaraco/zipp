@@ -71,13 +71,32 @@ class Translator:
         """
         Perform the replacements for a match from :func:`separate`.
         """
-        if character_set := match.group('set'):
-            # Strip fnmatch's outer group and end marker; extend() reapplies them.
-            translated = fnmatch.translate(character_set)[4:-3]
-            return rf'(?![{re.escape(self.seps)}]){translated}'
+        handler = self._replace_set if match.group('set') else self._replace_plain
+        return handler(match.group(0))
+
+    def _replace_set(self, character_set):
+        r"""
+        Translate a character set using shell-style semantics.
+
+        Glob character sets treat a leading ``!`` as negation and ``^``
+        as a literal (unlike regex), so defer to fnmatch, but guard
+        against matching a separator.
+
+        >>> Translator('/')._replace_set('[!a]')
+        '(?![/])[^a]'
+        >>> Translator('/')._replace_set('[^a]')
+        '(?![/])[\\^a]'
+        """
+        translated = _strip_fnmatch(fnmatch.translate(character_set))
+        return rf'(?![{re.escape(self.seps)}]){translated}'
+
+    def _replace_plain(self, text):
+        """
+        Escape the text, translating any wildcards.
+        """
         return (
             re
-            .escape(match.group(0))
+            .escape(text)
             .replace('\\*\\*', r'.*')
             .replace('\\*', rf'[^{re.escape(self.seps)}]*')
             .replace('\\?', r'[^/]')
@@ -120,3 +139,15 @@ def separate(pattern):
     ['a', '[?]', 'txt']
     """
     return re.finditer(r'([^\[]+)|(?P<set>[\[].*?[\]])|([\[][^\]]*$)', pattern)
+
+
+def _strip_fnmatch(translated):
+    r"""
+    Strip fnmatch's outer group and end marker.
+
+    >>> _strip_fnmatch(r'(?s:[^a])\z')
+    '[^a]'
+    >>> _strip_fnmatch(r'(?s:[^a])\Z')
+    '[^a]'
+    """
+    return re.fullmatch(r'\(\?s:(.*)\)\\[zZ]', translated, re.DOTALL).group(1)
