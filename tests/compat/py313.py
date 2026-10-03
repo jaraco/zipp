@@ -29,5 +29,5 @@ def _for_archive(self, archive):
 ForArchive = type(
     'ForArchive',
     (),
-    dict(_for_archive=_for_archive) if sys.version_info < (3, 14) else dict(),
+    dict(_for_archive=_for_archive) if sys.version_info < (3, 14) else {},
 )
