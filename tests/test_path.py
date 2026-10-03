@@ -472,9 +472,9 @@ class TestPath(unittest.TestCase):
         alpharep.filename = None
         root = zipfile.Path(alpharep)
         with self.assertRaises(TypeError):
-            _ = root.name
+            root.name
         with self.assertRaises(TypeError):
-            _ = root.parent
+            root.parent
 
         # .name and .parent should still work on subs
         sub = root / "b"
