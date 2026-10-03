@@ -540,6 +540,23 @@ class TestPath(unittest.TestCase):
             zipfile.Path(alpharep, "j/l.baz"),
         ]
 
+    @pass_alpharep
+    def test_glob_character_class_syntax(self, alpharep):
+        root = zipfile.Path(alpharep)
+        cases = [
+            ('[!a].txt', {'n.txt'}),
+            ('[!an].txt', set()),
+            ('[!b]', {'g/', 'j/'}),
+            ('j/[!k].b*', {'j/l.baz', 'j/m.bar'}),
+            ('j/[^k].b*', {'j/k.bin'}),
+            ('j/[!k-l].b*', {'j/m.bar'}),
+            ('j/[k-l].b*', {'j/k.bin', 'j/l.baz'}),
+            ('b[!x]c.txt', set()),
+        ]
+        for pattern, expected in cases:
+            with self.subTest(pattern=pattern):
+                assert {path.at for path in root.glob(pattern)} == expected
+
     def test_glob_empty(self):
         root = zipfile.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
         with self.assertRaises(ValueError):

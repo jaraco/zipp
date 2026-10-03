@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import re
 
@@ -70,7 +71,11 @@ class Translator:
         """
         Perform the replacements for a match from :func:`separate`.
         """
-        return match.group('set') or (
+        if character_set := match.group('set'):
+            # Strip fnmatch's outer group and end marker; extend() reapplies them.
+            translated = fnmatch.translate(character_set)[4:-3]
+            return rf'(?![{re.escape(self.seps)}]){translated}'
+        return (
             re
             .escape(match.group(0))
             .replace('\\*\\*', r'.*')
