@@ -96,7 +96,7 @@ class TestPath(unittest.TestCase):
     def test_iterdir_and_types(self, alpharep):
         root = zipfile.Path(alpharep)
         assert root.is_dir()
-        a, n, b, g, j = root.iterdir()
+        a, _n, b, g, _j = root.iterdir()
         assert a.is_file()
         assert b.is_dir()
         assert g.is_dir()
@@ -116,7 +116,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_iterdir_on_file(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, *_ = root.iterdir()
         with self.assertRaises(NotADirectoryError):
             a.iterdir()
 
@@ -131,7 +131,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_open(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, *_ = root.iterdir()
         with a.open(encoding="utf-8") as strm:
             data = strm.read()
         self.assertEqual(data, "content of a")
@@ -174,10 +174,12 @@ class TestPath(unittest.TestCase):
             data = u16.read_text("utf-8", encoding="utf-8")
 
         # both keyword arguments work.
-        with u16.open("r", encoding="utf-8", errors="strict") as f:
-            # error during decoding with wrong codec.
-            with self.assertRaises(UnicodeDecodeError):
-                f.read()
+        # error during decoding with wrong codec.
+        with (
+            u16.open("r", encoding="utf-8", errors="strict") as f,
+            self.assertRaises(UnicodeDecodeError),
+        ):
+            f.read()
 
     @unittest.skipIf(
         not getattr(sys.flags, 'warn_default_encoding', 0),
@@ -192,10 +194,10 @@ class TestPath(unittest.TestCase):
         """EncodingWarning must blame the read_text and open calls."""
         assert sys.flags.warn_default_encoding
         root = zipfile.Path(alpharep)
-        with self.assertWarns(EncodingWarning) as wc:  # noqa: F821 (astral-sh/ruff#13296)
+        with self.assertWarns(EncodingWarning) as wc:
             root.joinpath("a.txt").read_text()
         assert __file__ == wc.filename
-        with self.assertWarns(EncodingWarning) as wc:  # noqa: F821 (astral-sh/ruff#13296)
+        with self.assertWarns(EncodingWarning) as wc:
             root.joinpath("a.txt").open("r").close()
         assert __file__ == wc.filename
 
@@ -239,7 +241,7 @@ class TestPath(unittest.TestCase):
     @pass_alpharep
     def test_read(self, alpharep):
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        a, *_ = root.iterdir()
         assert a.read_text(encoding="utf-8") == "content of a"
         # Also check positional encoding arg (gh-101144).
         assert a.read_text("utf-8") == "content of a"
@@ -305,7 +307,7 @@ class TestPath(unittest.TestCase):
         reflect that change.
         """
         root = zipfile.Path(alpharep)
-        a, n, b, g, j = root.iterdir()
+        assert len(list(root.iterdir())) == 5
         alpharep.writestr('foo.txt', 'foo')
         alpharep.writestr('bar/baz.txt', 'baz')
         assert any(child.name == 'foo.txt' for child in root.iterdir())
@@ -470,9 +472,9 @@ class TestPath(unittest.TestCase):
         alpharep.filename = None
         root = zipfile.Path(alpharep)
         with self.assertRaises(TypeError):
-            root.name
+            _ = root.name
         with self.assertRaises(TypeError):
-            root.parent
+            _ = root.parent
 
         # .name and .parent should still work on subs
         sub = root / "b"
@@ -590,7 +592,7 @@ class TestPath(unittest.TestCase):
 
         saved_1 = pickle.dumps(zipfile.Path(zipfile_ondisk, at=subpath))
         restored_1 = pickle.loads(saved_1)
-        first, *rest = restored_1.iterdir()
+        first, *_rest = restored_1.iterdir()
         assert first.read_text(encoding='utf-8').startswith('content of ')
 
     @pass_alpharep
