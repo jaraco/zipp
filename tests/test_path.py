@@ -337,6 +337,35 @@ class TestPath(unittest.TestCase):
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
 
+    def test_recursive_iterdir_work(self):
+        """
+        Walking a tree should not rescan the archive for each directory.
+        """
+
+        class CountedPath(zipfile.Path):
+            constructed = 0
+
+            def __init__(self, *args, **kwargs):
+                type(self).constructed += 1
+                super().__init__(*args, **kwargs)
+
+        size = 32
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf:
+            for i in range(size):
+                zf.writestr(f'dir-{i}/file-{i}.txt', b'content')
+        with zipfile.ZipFile(data, 'r') as zf:
+            pending = [CountedPath(zf)]
+            files = []
+            while pending:
+                for child in pending.pop().iterdir():
+                    if child.is_dir():
+                        pending.append(child)
+                    else:
+                        files.append(child.name)
+        assert sorted(files) == sorted(f'file-{i}.txt' for i in range(size))
+        assert CountedPath.constructed <= 4 * size
+
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
         alpharep = self.zipfile_ondisk(alpharep)
