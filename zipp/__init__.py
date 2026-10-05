@@ -190,6 +190,14 @@ class FastLookup(CompleteDirs):
     def _name_set_prop(self):
         return super()._name_set()
 
+    @functools.cached_property
+    def _children(self):
+        children = {}
+        for name in self.namelist():
+            parent = posixpath.dirname(name.rstrip('/'))
+            children.setdefault(parent, []).append(name)
+        return children
+
 
 def _extract_text_encoding(encoding=None, *args, **kwargs):
     stack_level = 3
@@ -396,6 +404,9 @@ class Path:
     def iterdir(self):
         if not self.is_dir():
             raise NotADirectoryError("Can't listdir a file")
+        if isinstance(self.root, FastLookup):
+            names = self.root._children.get(self.at.rstrip('/'), ())
+            return map(self._next, names)
         subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)
 
