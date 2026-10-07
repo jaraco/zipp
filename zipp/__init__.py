@@ -196,6 +196,18 @@ def _extract_text_encoding(encoding=None, *args, **kwargs):
     return text_encoding(encoding, stack_level), args, kwargs
 
 
+def _coerce_open_args(buffering, encoding):
+    """
+    Preserve the legacy ``Path.open('r', encoding)`` form while allowing the
+    pathlib-compatible second positional argument to mean buffering.
+    """
+    if isinstance(buffering, int):
+        return buffering, encoding
+    if encoding is not None:
+        raise TypeError("encoding specified twice")
+    return -1, buffering
+
+
 class Path:
     """
     A :class:`importlib.resources.abc.Traversable` interface for zip files.
@@ -326,12 +338,22 @@ class Path:
     def __hash__(self):
         return hash((self.root, self.at))
 
-    def open(self, mode='r', *args, pwd=None, **kwargs):
+    def open(
+        self,
+        mode='r',
+        buffering=-1,
+        encoding=None,
+        errors=None,
+        newline=None,
+        *,
+        pwd=None,
+    ):
         """
         Open this entry as text or binary following the semantics
         of ``pathlib.Path.open()`` by passing arguments through
         to io.TextIOWrapper().
         """
+        buffering, encoding = _coerce_open_args(buffering, encoding)
         if self.is_dir():
             raise IsADirectoryError(self)
         zip_mode = mode[0]
@@ -339,12 +361,20 @@ class Path:
             raise FileNotFoundError(self)
         stream = self.root.open(self.at, zip_mode, pwd=pwd)
         if 'b' in mode:
-            if args or kwargs:
+            if encoding is not None or errors is not None or newline is not None:
                 raise ValueError("encoding args invalid for binary operation")
             return stream
         # Text mode:
-        encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        return io.TextIOWrapper(stream, encoding, *args, **kwargs)
+        if buffering == 0:
+            raise ValueError("can't have unbuffered text I/O")
+        encoding = text_encoding(encoding, 3)
+        return io.TextIOWrapper(
+            stream,
+            encoding,
+            errors,
+            newline,
+            line_buffering=buffering == 1,
+        )
 
     def _base(self):
         return pathlib.PurePosixPath(self.at) if self.at else self.filename
@@ -371,7 +401,7 @@ class Path:
 
     def read_text(self, *args, **kwargs):
         encoding, args, kwargs = _extract_text_encoding(*args, **kwargs)
-        with self.open('r', encoding, *args, **kwargs) as strm:
+        with self.open('r', -1, encoding, *args, **kwargs) as strm:
             return strm.read()
 
     def read_bytes(self):
