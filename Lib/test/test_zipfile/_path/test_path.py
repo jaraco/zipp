@@ -354,7 +354,8 @@ class TestPath(unittest.TestCase):
         assert isinstance(root / 'b', Subclass)
 
     def test_at(self):
-        root = zipfile.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
+        zip_file = self.enterContext(zipfile.ZipFile(io.BytesIO(), 'w'))
+        root = zipfile.Path(zip_file)
         assert root.at == ''
         assert (root / 'foo' / 'bar').at == 'foo/bar'
 
@@ -362,7 +363,8 @@ class TestPath(unittest.TestCase):
         """
         An unnamed zip file is indicated by ":zipfile:"
         """
-        root = zipfile.Path(zipfile.ZipFile(io.BytesIO(), 'w'))
+        zip_file = self.enterContext(zipfile.ZipFile(io.BytesIO(), 'w'))
+        root = zipfile.Path(zip_file)
         assert str(root) == ':zipfile:'
         assert str(root / 'foo' / 'bar') == ':zipfile:/foo/bar'
 
