@@ -13,7 +13,6 @@ from zipp.compat.overlay import zipfile
 
 from ._test_params import Invoked, parameterize
 from .compat.py39.os_helper import FakePath, temp_dir  # type: ignore[import-not-found]
-from .compat.py310 import TestCase
 from .compat.py313 import ForArchive
 
 
@@ -78,7 +77,7 @@ alpharep_generators = [
 pass_alpharep = parameterize(['alpharep'], alpharep_generators)
 
 
-class TestPath(TestCase):
+class TestPath(unittest.TestCase):
     def zipfile_ondisk(self, alpharep):
         tmpdir = pathlib.Path(self.enterContext(temp_dir()))
         buffer = alpharep.fp
@@ -693,7 +692,7 @@ class TestPath(TestCase):
 
     @pass_alpharep
     def test_interface(self, alpharep):
-        from .compat.py310 import Traversable
+        from importlib.resources.abc import Traversable
 
         zf = zipfile.Path(alpharep)
         assert isinstance(zf, Traversable)

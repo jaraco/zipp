@@ -17,7 +17,6 @@ import stat
 import zipfile
 
 from ._functools import none_as, save_method_args
-from .compat.py310 import text_encoding
 from .glob import Translator
 
 __all__ = ['Path']
@@ -193,7 +192,7 @@ class FastLookup(CompleteDirs):
 
 def _extract_text_encoding(encoding=None, *args, **kwargs):
     stack_level = 3
-    return text_encoding(encoding, stack_level), args, kwargs
+    return io.text_encoding(encoding, stack_level), args, kwargs
 
 
 class Path:
