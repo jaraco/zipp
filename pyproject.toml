@@ -40,7 +40,6 @@ test = [
 	"more_itertools",
 	"big-O",
 	"pytest-ignore-flaky",
-	"jaraco.test",
 ]
 
 doc = [
