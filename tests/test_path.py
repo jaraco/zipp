@@ -180,10 +180,6 @@ class TestPath(unittest.TestCase):
         not getattr(sys.flags, 'warn_default_encoding', 0),
         "Requires warn_default_encoding",
     )
-    @unittest.skipIf(
-        sys.implementation.name == 'pypy' and sys.pypy_version_info < (7, 3, 18),
-        "Older PyPy versions set the wrong stacklevel in text_encoding()",
-    )
     @pass_alpharep
     def test_encoding_warnings(self, alpharep):
         """EncodingWarning must blame the read_text and open calls."""
@@ -698,7 +694,7 @@ class TestPath(unittest.TestCase):
         assert isinstance(zf, Traversable)
 
 
-class DirtyZipInfo(zipfile.ZipInfo, ForArchive):
+class DirtyZipInfo(zipfile.ZipInfo, ForArchive):  # type: ignore[name-defined]
     """
     Bypass name sanitization.
     """
