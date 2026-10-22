@@ -1,0 +1,1 @@
+Made ``Path.iterdir`` on read-only archives look up a directory's children from a cached index instead of rescanning the whole archive, so walking a tree is no longer quadratic.
