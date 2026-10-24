@@ -137,8 +137,15 @@ def separate(pattern):
     ['*.txt']
     >>> [m.group(0) for m in separate('a[?]txt')]
     ['a', '[?]', 'txt']
+
+    A closing bracket immediately after ``[`` or ``[!`` is part of the set.
+
+    >>> [m.group(0) for m in separate('[]a].txt')]
+    ['[]a]', '.txt']
+    >>> [m.group(0) for m in separate('[!]].txt')]
+    ['[!]]', '.txt']
     """
-    return re.finditer(r'([^\[]+)|(?P<set>[\[].*?[\]])|([\[][^\]]*$)', pattern)
+    return re.finditer(r'([^\[]+)|(?P<set>\[!?]?[^\]]*\])|(\[[^\]]*$)', pattern)
 
 
 def _strip_fnmatch(translated):
