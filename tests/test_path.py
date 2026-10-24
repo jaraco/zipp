@@ -559,6 +559,32 @@ class TestPath(unittest.TestCase):
         root = zipfile.Path(alpharep)
         assert {path.at for path in root.glob(pattern)} == expected
 
+    @parameterize(
+        ['alpharep', 'pattern', 'expected'],
+        [
+            (alpharep, pattern, expected)
+            for alpharep in alpharep_generators
+            for pattern, expected in [
+                ('[]].txt', {'].txt'}),
+                ('[]a].txt', {'].txt', 'a.txt'}),
+                ('[!]].txt', {'a.txt', 'n.txt', '[.txt'}),
+                ('[!]a].txt', {'n.txt', '[.txt'}),
+                ('b/[]].txt', {'b/].txt'}),
+                ('b[!]]c.txt', set()),
+                ('[!].txt', {'[!].txt'}),
+                ('[.txt', {'[.txt'}),
+                ('[[]*.txt', {'[!].txt', '[.txt'}),
+            ]
+        ],
+    )
+    def test_glob_character_class_closing_bracket(self, alpharep, pattern, expected):
+        alpharep.writestr('].txt', b'')
+        alpharep.writestr('b/].txt', b'')
+        alpharep.writestr('[!].txt', b'')
+        alpharep.writestr('[.txt', b'')
+        root = zipfile.Path(alpharep)
+        assert {path.at for path in root.glob(pattern)} == expected
+
     def test_glob_empty(self):
         zip_file = self.enterContext(zipfile.ZipFile(io.BytesIO(), 'w'))
         root = zipfile.Path(zip_file)
