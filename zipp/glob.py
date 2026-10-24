@@ -22,6 +22,13 @@ class Translator:
 
     seps: str
 
+    #: Placeholder for a non-trailing '**/' segment (including its trailing
+    #: separator), substituted back in :meth:`translate_core` after the rest
+    #: of the pattern has been translated. Kept out of the way of the
+    #: character classes used elsewhere in this module (no '*', '?', '/',
+    #: '[', or ']'), and left untouched by :func:`re.escape`.
+    any_dirs_sentinel = '\x00'
+
     def __init__(self, seps: str = _default_seps):
         assert seps and set(seps) <= set(_default_seps), "Invalid separators"
         self.seps = seps
@@ -62,10 +69,18 @@ class Translator:
         >>> t.translate_core('a?txt')
         'a[^/]txt'
         >>> t.translate_core('**/*').replace('\\\\', '')
-        '.*/[^/][^/]*'
+        '(?:.*[/])?[^/][^/]*'
+        >>> t.translate_core('**').replace('\\\\', '')
+        '.*'
+        >>> t.translate_core('a/**').replace('\\\\', '')
+        'a/.*'
         """
         self.restrict_rglob(pattern)
-        return ''.join(map(self.replace, separate(self.star_not_empty(pattern))))
+        core = ''.join(
+            map(self.replace, separate(self.mark_any_dirs(self.star_not_empty(pattern))))
+        )
+        seps_pattern = rf'[{re.escape(self.seps)}]'
+        return core.replace(self.any_dirs_sentinel, rf'(?:.*{seps_pattern})?')
 
     def replace(self, match):
         """
@@ -115,6 +130,31 @@ class Translator:
         segments = re.split(seps_pattern, pattern)
         if any('**' in segment and segment != '**' for segment in segments):
             raise ValueError("** must appear alone in a path segment")
+
+    def mark_any_dirs(self, pattern):
+        r"""
+        Replace non-trailing '**' segments (i.e. those followed by a
+        separator and more pattern) with a sentinel, so that after the
+        remainder of the pattern is translated, the sentinel can be
+        expanded into a regex alternative that matches zero *or more*
+        path segments, per glob's and pathlib's documented '**' semantics.
+
+        A trailing bare '**' (nothing follows it) is left alone; its
+        existing translation to '.*' already matches zero or more of
+        anything, directories included.
+
+        >>> t = Translator()
+        >>> t.mark_any_dirs('**/*.txt') == t.any_dirs_sentinel + '*.txt'
+        True
+        >>> t.mark_any_dirs('a/**/b') == 'a/' + t.any_dirs_sentinel + 'b'
+        True
+        >>> t.mark_any_dirs('a/**') == 'a/**'
+        True
+        >>> t.mark_any_dirs('**') == '**'
+        True
+        """
+        seps_pattern = rf'[{re.escape(self.seps)}]'
+        return re.sub(rf'[*]{{2}}{seps_pattern}', self.any_dirs_sentinel, pattern)
 
     def star_not_empty(self, pattern):
         """

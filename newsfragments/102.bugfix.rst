@@ -1,0 +1,1 @@
+Fixed ``Path.glob`` (and ``rglob``) so a non-trailing ``**`` segment (e.g. ``**/*.txt``) also matches zero directory levels, per ``glob`` and current ``pathlib`` semantics -- top-level files now match patterns like ``**/*.txt``, not just nested ones.
