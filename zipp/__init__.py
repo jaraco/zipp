@@ -118,6 +118,14 @@ class CompleteDirs(InitializedState, zipfile.ZipFile):
         names = super().namelist()
         return names + list(self._implied_dirs(names))
 
+    def _children(self, at):
+        parent = at.rstrip('/')
+        return (
+            name
+            for name in self.namelist()
+            if posixpath.dirname(name.rstrip('/')) == parent
+        )
+
     def _name_set(self):
         return set(self.namelist())
 
@@ -181,6 +189,29 @@ class FastLookup(CompleteDirs):
     @functools.cached_property
     def _namelist(self):
         return super().namelist()
+
+    @functools.cached_property
+    def _dir_index(self):
+        children = {}
+        for name in self.namelist():
+            parent, sep, _ = name.rstrip('/').rpartition('/')
+            parent = parent.rstrip('/') or parent + sep
+            children.setdefault(parent, []).append(name)
+        return children
+
+    def _children(self, at):
+        if self.fp is None:
+            return super()._children(at)
+        index = self._dir_index
+        if self.fp is None:
+            self.__dict__.pop('_dir_index', None)
+        return index.get(at.rstrip('/'), ())
+
+    def close(self):
+        try:
+            super().close()
+        finally:
+            self.__dict__.pop('_dir_index', None)
 
     def _name_set(self):
         return self._name_set_prop
@@ -395,6 +426,8 @@ class Path:
     def iterdir(self):
         if not self.is_dir():
             raise NotADirectoryError("Can't listdir a file")
+        if type(self) is Path:
+            return map(self._next, self.root._children(self.at))
         subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)
 

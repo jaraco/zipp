@@ -1,10 +1,17 @@
+import gc
 import io
 import itertools
 import pathlib
 import pickle
+import posixpath
 import stat
 import sys
 import unittest
+import warnings
+import weakref
+from concurrent.futures import ThreadPoolExecutor
+from threading import Barrier
+from unittest import mock
 
 import jaraco.itertools
 from jaraco.functools import compose
@@ -702,3 +709,241 @@ class DirtyZipInfo(zipfile.ZipInfo, ForArchive):  # type: ignore[name-defined]
     def __init__(self, filename, *args, **kwargs):
         super().__init__(filename, *args, **kwargs)
         self.filename = filename
+
+
+class TestDirectoryIndex(unittest.TestCase):
+    def make_path(self, names, path_type=zipfile.Path):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf, warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            for name in names:
+                zf.writestr(DirtyZipInfo(name)._for_archive(zf), b'content')
+        zf = self.enterContext(zipfile.ZipFile(data))
+        zf.filename = 'index.zip'
+        return path_type(zf)
+
+    def test_order_and_duplicates(self):
+        names = ['a/one', 'top', 'a/', 'a/two', 'a/one', 'b/leaf', 'empty/']
+        root = self.make_path(names)
+        assert [p.at for p in root.iterdir()] == ['top', 'a/', 'empty/', 'b/']
+        assert [p.at for p in (root / 'a').iterdir()] == ['a/one', 'a/two', 'a/one']
+        assert root.root.namelist() == names + ['b/']
+        assert list((root / 'empty').iterdir()) == []
+        assert list((root / 'missing/').iterdir()) == []
+
+    def test_unusual_names(self):
+        names = [
+            'a//b//file',
+            'a///',
+            '/abs/file',
+            '//double/file',
+            '../up.txt',
+            './dot.txt',
+            'a/../q',
+            'back\\slash',
+            '/',
+            '//',
+            'unicodé/文件',
+            'line\nbreak/file',
+        ]
+        root = self.make_path(names)
+        reference = names + list(zipfile._path.CompleteDirs._implied_dirs(names))
+        assert root.root.namelist() == reference
+        queries = ['', '/', '//', 'missing/', 'a/', 'a//'] + [
+            name for name in reference if name.endswith('/')
+        ]
+        for at in queries:
+            with self.subTest(at=at):
+                expected = [
+                    name
+                    for name in reference
+                    if posixpath.dirname(name.rstrip('/')) == at.rstrip('/')
+                ]
+                assert [p.at for p in zipfile.Path(root.root, at).iterdir()] == expected
+
+    def test_empty_archive(self):
+        assert list(self.make_path([]).iterdir()) == []
+
+    def test_file_directory_collision(self):
+        root = self.make_path(['a', 'a/file'])
+        assert [p.at for p in root.iterdir()] == ['a', 'a/']
+        assert (root / 'a').is_file()
+        assert [p.at for p in (root / 'a/').iterdir()] == ['a/file']
+        with self.assertRaises(NotADirectoryError):
+            (root / 'a').iterdir()
+
+    def test_writable_modes(self):
+        for mode in ['w', 'a', 'x']:
+            with self.subTest(mode=mode), zipfile.ZipFile(io.BytesIO(), mode) as zf:
+                root = zipfile.Path(zf)
+                assert list(root.iterdir()) == []
+                zf.writestr('a/first', b'first')
+                (directory,) = root.iterdir()
+                assert [p.at for p in directory.iterdir()] == ['a/first']
+                zf.writestr('a/second', b'second')
+                assert [p.at for p in directory.iterdir()] == ['a/first', 'a/second']
+
+    def test_subclass_hooks(self):
+        class AllEntries(zipfile.Path):
+            def _is_child(self, path):
+                return True
+
+        class RenamedEntries(zipfile.Path):
+            def _next(self, at):
+                return super()._next('visible.txt')
+
+        class BasenameEntries(zipfile.Path):
+            def __init__(self, root, at=''):
+                super().__init__(root, posixpath.basename(at.rstrip('/')))
+
+        for cls in [AllEntries, RenamedEntries, BasenameEntries]:
+            with self.subTest(cls=cls):
+                root = self.make_path(['a/one', 'top'], cls)
+                children = list(root.iterdir())
+                assert len(children) == len(root.root.namelist())
+                assert all(isinstance(child, cls) for child in children)
+
+    def test_subclass_uses_original_listing(self):
+        class SubPath(zipfile.Path):
+            pass
+
+        root = self.make_path(['a/one', 'top'], SubPath)
+        children = list(root.iterdir())
+        assert [child.at for child in children] == ['top', 'a/']
+        assert all(isinstance(child, SubPath) for child in children)
+        assert '_dir_index' not in root.root.__dict__
+
+    def test_pickle_after_listing(self):
+        directory = pathlib.Path(self.enterContext(temp_dir()))
+        filename = directory / 'index.zip'
+        with zipfile.ZipFile(filename, 'w') as zf:
+            zf.writestr('a/file', b'content')
+        root = zipfile.Path(filename)
+        assert [p.at for p in root.iterdir()] == ['a/']
+        saved = pickle.dumps(root)
+        root.root.close()
+        restored = pickle.loads(saved)
+        self.addCleanup(restored.root.close)
+        assert [p.at for p in restored.iterdir()] == ['a/']
+        assert (restored / 'a' / 'file').read_bytes() == b'content'
+
+    def test_recursive_iterdir_constructs_only_children(self):
+        root = self.make_path([f'd{i}/f{j}' for i in range(100) for j in range(3)])
+        original = zipfile.Path.__init__
+        constructed = 0
+
+        def counted_init(self, *args, **kwargs):
+            nonlocal constructed
+            constructed += 1
+            original(self, *args, **kwargs)
+
+        with mock.patch.object(zipfile.Path, '__init__', counted_init):
+            pending = [root]
+            while pending:
+                pending.extend(
+                    child for child in pending.pop().iterdir() if child.is_dir()
+                )
+        assert constructed == 400
+
+    def test_repeated_listings_do_not_rescan_names(self):
+        root = self.make_path(['a/one', 'a/two', 'top'])
+        list(root.iterdir())
+        names = mock.MagicMock()
+        names.__iter__.side_effect = AssertionError('Rescanned the archive namelist')
+        with mock.patch.object(root.root, 'namelist', return_value=names):
+            for _ in range(2):
+                assert [p.at for p in root.iterdir()] == ['top', 'a/']
+                directory = zipfile.Path(root.root, 'a/')
+                assert [p.at for p in directory.iterdir()] == ['a/one', 'a/two']
+
+    def test_nonlisting_operations_do_not_build_index(self):
+        root = self.make_path(['a/one', 'top'])
+        root.root.namelist()
+        assert (root / 'a').exists()
+        assert (root / 'top').read_text(encoding='utf-8') == 'content'
+        assert [p.at for p in root.glob('a/*')] == ['a/one']
+        assert '_dir_index' not in root.root.__dict__
+        with self.assertRaises(NotADirectoryError):
+            (root / 'top').iterdir()
+        assert '_dir_index' not in root.root.__dict__
+
+    def test_first_listing_builds_shared_index(self):
+        root = self.make_path(['a/one', 'top'])
+        assert '_dir_index' not in root.root.__dict__
+        iterator = (root / 'a').iterdir()
+        assert '_dir_index' in root.root.__dict__
+        index = root.root._dir_index
+        assert [p.at for p in iterator] == ['a/one']
+        assert [p.at for p in root.iterdir()] == ['top', 'a/']
+        assert root.root._dir_index is index
+
+    def test_close_releases_index_and_preserves_metadata_listing(self):
+        class Index(dict):
+            pass
+
+        root = self.make_path(['a/one', 'top'])
+        iterator = root.iterdir()
+        root.root._dir_index = Index(root.root._dir_index)
+        index_ref = weakref.ref(root.root._dir_index)
+        root.root.close()
+        assert index_ref() is None
+        assert '_dir_index' not in root.root.__dict__
+        assert [p.at for p in iterator] == ['top', 'a/']
+        assert [p.at for p in root.iterdir()] == ['top', 'a/']
+        assert [p.at for p in (root / 'a').iterdir()] == ['a/one']
+        assert '_dir_index' not in root.root.__dict__
+        root.root.close()
+
+    def test_close_during_index_construction_does_not_retain_index(self):
+        root = self.make_path(['a/one', 'top'])
+        names = root.root.namelist()
+
+        def closing_names():
+            root.root.close()
+            return names
+
+        with mock.patch.object(root.root, 'namelist', closing_names):
+            assert [p.at for p in root.iterdir()] == ['top', 'a/']
+        assert '_dir_index' not in root.root.__dict__
+
+    def test_index_lifetime_follows_archive(self):
+        class Index(dict):
+            pass
+
+        directory = pathlib.Path(self.enterContext(temp_dir()))
+        filename = directory / 'index.zip'
+        with zipfile.ZipFile(filename, 'w') as zf:
+            zf.writestr('a/file', b'content')
+        root = zipfile.Path(filename)
+        list(root.iterdir())
+        root.root._dir_index = Index(root.root._dir_index)
+        index_ref = weakref.ref(root.root._dir_index)
+        archive_ref = weakref.ref(root.root)
+        stream = root.root.fp
+        del root
+        gc.collect()
+        assert archive_ref() is None
+        assert index_ref() is None
+        assert stream.closed
+
+    def test_concurrent_index_construction(self):
+        root = self.make_path(['a/one', 'a/two'])
+        barrier = Barrier(4)
+        original = zipfile.ZipFile.namelist
+        builds = []
+
+        def names(archive):
+            builds.append(archive)
+            barrier.wait(timeout=10)
+            return original(archive)
+
+        def listing(_):
+            return [p.at for p in zipfile.Path(root.root, 'a/').iterdir()]
+
+        with (
+            mock.patch.object(zipfile.ZipFile, 'namelist', names),
+            ThreadPoolExecutor(max_workers=4) as executor,
+        ):
+            results = list(executor.map(listing, range(4)))
+        assert results == [['a/one', 'a/two']] * 4
+        assert len(builds) == 4
