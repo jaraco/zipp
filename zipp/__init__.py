@@ -195,6 +195,7 @@ class FastLookup(CompleteDirs):
         children = {}
         for name in self.namelist():
             parent, sep, _ = name.rstrip('/').rpartition('/')
+            # Preserve parents consisting entirely of slashes, as dirname does.
             parent = parent.rstrip('/') or parent + sep
             children.setdefault(parent, []).append(name)
         return children
@@ -203,6 +204,7 @@ class FastLookup(CompleteDirs):
         if self.fp is None:
             return super()._children(at)
         index = self._dir_index
+        # Construction may finish after another thread closes the archive.
         if self.fp is None:
             self.__dict__.pop('_dir_index', None)
         return index.get(at.rstrip('/'), ())
