@@ -740,7 +740,7 @@ class TestDirectoryIndex(unittest.TestCase):
     def make_path(self, names):
         data = io.BytesIO()
         with zipfile.ZipFile(data, 'w') as zf, warnings.catch_warnings():
-            warnings.simplefilter('ignore', UserWarning)
+            warnings.filterwarnings('ignore', 'Duplicate name:', UserWarning)
             for name in names:
                 zf.writestr(DirtyZipInfo(name)._for_archive(zf), b'content')
         zf = zipfile.ZipFile(data)
@@ -782,6 +782,49 @@ class TestDirectoryIndex(unittest.TestCase):
                 assert [
                     child.at for child in zipfile.Path(root.root, at).iterdir()
                 ] == expected
+
+    def test_class_is_child_override(self):
+        class AllChildren(zipfile.Path):
+            def _is_child(self, path):
+                return True
+
+        root = AllChildren(self.make_path(['a/one', 'top']).root)
+        assert [child.at for child in root.iterdir()] == ['a/one', 'top', 'a/']
+
+    def test_instance_is_child_override(self):
+        root = self.make_path(['a/one', 'top'])
+        root._is_child = lambda path: True
+        assert [child.at for child in root.iterdir()] == ['a/one', 'top', 'a/']
+
+    def test_class_next_override(self):
+        class LiftedChildren(zipfile.Path):
+            def _next(self, at):
+                return super()._next(at.replace('a/', ''))
+
+        root = LiftedChildren(self.make_path(['a/one', 'top']).root)
+        assert [child.at for child in root.iterdir()] == ['one', 'top', '']
+
+    def test_instance_next_override(self):
+        root = self.make_path(['a/one', 'top'])
+        root._next = lambda at: zipfile.Path(root.root, at.replace('a/', ''))
+        assert [child.at for child in root.iterdir()] == ['one', 'top', '']
+
+    def test_is_child_bound_to_another_path(self):
+        root = self.make_path(['a/one', 'top'])
+        root._is_child = (root / 'a')._is_child
+        assert [child.at for child in root.iterdir()] == ['a/one']
+
+    def test_next_bound_to_another_path(self):
+        class LiftedChildren(zipfile.Path):
+            def __init__(self, root, at=''):
+                super().__init__(root, at.replace('a/', ''))
+
+        root = self.make_path(['a/one', 'top'])
+        other = LiftedChildren(self.make_path(['different']).root)
+        root._next = other._next
+        children = list(root.iterdir())
+        assert [child.at for child in children] == ['one', 'top', '']
+        assert all(child.root is other.root for child in children)
 
     def test_empty_archive(self):
         assert list(self.make_path([]).iterdir()) == []

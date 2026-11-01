@@ -1,1 +1,3 @@
 Made ``Path.iterdir`` on read-only archives look up a directory's children from a cached index instead of rescanning the whole archive, so walking a tree is no longer quadratic.
+The index is released when the archive closes, while existing iterators remain usable.
+Paths with customized ``_next`` or ``_is_child`` hooks retain their original listing behavior.
