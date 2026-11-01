@@ -2,9 +2,12 @@ import io
 import itertools
 import pathlib
 import pickle
+import posixpath
 import stat
 import sys
 import unittest
+import warnings
+from unittest import mock
 
 import jaraco.itertools
 from jaraco.functools import compose
@@ -329,6 +332,35 @@ class TestPath(unittest.TestCase):
             entry.joinpath('suffix')
         # Check the file iterated all items
         assert entries.count == self.HUGE_ZIPFILE_NUM_ENTRIES
+
+    def test_recursive_iterdir_work(self):
+        """
+        Walking a tree should not rescan the archive for each directory.
+        """
+
+        class CountedPath(zipfile.Path):
+            constructed = 0
+
+            def __init__(self, *args, **kwargs):
+                type(self).constructed += 1
+                super().__init__(*args, **kwargs)
+
+        size = 32
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf:
+            for i in range(size):
+                zf.writestr(f'dir-{i}/file-{i}.txt', b'content')
+        with zipfile.ZipFile(data, 'r') as zf:
+            pending = [CountedPath(zf)]
+            files = []
+            while pending:
+                for child in pending.pop().iterdir():
+                    if child.is_dir():
+                        pending.append(child)
+                    else:
+                        files.append(child.name)
+        assert sorted(files) == sorted(f'file-{i}.txt' for i in range(size))
+        assert CountedPath.constructed <= 4 * size
 
     @pass_alpharep
     def test_read_does_not_close(self, alpharep):
@@ -702,3 +734,139 @@ class DirtyZipInfo(zipfile.ZipInfo, ForArchive):  # type: ignore[name-defined]
     def __init__(self, filename, *args, **kwargs):
         super().__init__(filename, *args, **kwargs)
         self.filename = filename
+
+
+class TestDirectoryIndex(unittest.TestCase):
+    def make_path(self, names):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf, warnings.catch_warnings():
+            warnings.filterwarnings('ignore', 'Duplicate name:', UserWarning)
+            for name in names:
+                zf.writestr(DirtyZipInfo(name)._for_archive(zf), b'content')
+        zf = zipfile.ZipFile(data)
+        self.addCleanup(zf.close)
+        return zipfile.Path(zf)
+
+    def test_order_duplicates_and_unusual_parents(self):
+        names = [
+            'a/one',
+            'top',
+            'a/',
+            'a/two',
+            'a/one',
+            'a//b//file',
+            'a///',
+            '/abs/file',
+            '//double/file',
+            '../up.txt',
+            './dot.txt',
+            'back\\slash',
+            '/',
+            '//',
+            'unicodé/文件',
+            'line\nbreak/file',
+            'empty/',
+        ]
+        root = self.make_path(names)
+        complete = root.root.namelist()
+        queries = ['', '/', '//', 'missing/'] + [
+            name for name in complete if name.endswith('/')
+        ]
+        for at in queries:
+            with self.subTest(at=at):
+                expected = [
+                    name
+                    for name in complete
+                    if posixpath.dirname(name.rstrip('/')) == at.rstrip('/')
+                ]
+                assert [
+                    child.at for child in zipfile.Path(root.root, at).iterdir()
+                ] == expected
+
+    def test_class_is_child_override(self):
+        class AllChildren(zipfile.Path):
+            def _is_child(self, path):
+                return True
+
+        root = AllChildren(self.make_path(['a/one', 'top']).root)
+        assert [child.at for child in root.iterdir()] == ['a/one', 'top', 'a/']
+
+    def test_instance_is_child_override(self):
+        root = self.make_path(['a/one', 'top'])
+        root._is_child = lambda path: True
+        assert [child.at for child in root.iterdir()] == ['a/one', 'top', 'a/']
+
+    def test_class_next_override(self):
+        class LiftedChildren(zipfile.Path):
+            def _next(self, at):
+                return super()._next(at.replace('a/', ''))
+
+        root = LiftedChildren(self.make_path(['a/one', 'top']).root)
+        assert [child.at for child in root.iterdir()] == ['one', 'top', '']
+
+    def test_instance_next_override(self):
+        root = self.make_path(['a/one', 'top'])
+        root._next = lambda at: zipfile.Path(root.root, at.replace('a/', ''))
+        assert [child.at for child in root.iterdir()] == ['one', 'top', '']
+
+    def test_is_child_bound_to_another_path(self):
+        root = self.make_path(['a/one', 'top'])
+        root._is_child = (root / 'a')._is_child
+        assert [child.at for child in root.iterdir()] == ['a/one']
+
+    def test_next_bound_to_another_path(self):
+        class LiftedChildren(zipfile.Path):
+            def __init__(self, root, at=''):
+                super().__init__(root, at.replace('a/', ''))
+
+        root = self.make_path(['a/one', 'top'])
+        other = LiftedChildren(self.make_path(['different']).root)
+        root._next = other._next
+        children = list(root.iterdir())
+        assert [child.at for child in children] == ['one', 'top', '']
+        assert all(child.root is other.root for child in children)
+
+    def test_empty_archive(self):
+        assert list(self.make_path([]).iterdir()) == []
+
+
+class TestDirectoryIndexClose(unittest.TestCase):
+    def make_path(self, names):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf:
+            for name in names:
+                zf.writestr(name, b'content')
+        zf = zipfile.ZipFile(data)
+        self.addCleanup(zf.close)
+        return zipfile.Path(zf)
+
+    def test_close_clears_index_and_preserves_iterators(self):
+        root = self.make_path(['a/one', 'top'])
+        iterator = root.iterdir()
+        assert '_children' in root.root.__dict__
+        root.root.close()
+        assert '_children' not in root.root.__dict__
+        assert [child.at for child in iterator] == ['top', 'a/']
+        assert [child.at for child in root.iterdir()] == ['top', 'a/']
+        assert [child.at for child in (root / 'a').iterdir()] == ['a/one']
+        assert '_children' not in root.root.__dict__
+        root.root.close()
+
+    def test_close_without_listing_does_not_build_index(self):
+        root = self.make_path([])
+        root.root.close()
+        assert '_children' not in root.root.__dict__
+        assert list(root.iterdir()) == []
+        assert '_children' not in root.root.__dict__
+
+    def test_close_during_index_construction_does_not_retain_index(self):
+        root = self.make_path(['a/one', 'top'])
+        names = root.root.namelist()
+
+        def closing_names():
+            root.root.close()
+            return names
+
+        with mock.patch.object(root.root, 'namelist', closing_names):
+            assert [child.at for child in root.iterdir()] == ['top', 'a/']
+        assert '_children' not in root.root.__dict__
