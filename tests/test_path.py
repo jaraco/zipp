@@ -3,9 +3,11 @@ import io
 import itertools
 import pathlib
 import pickle
+import posixpath
 import stat
 import sys
 import unittest
+import warnings
 
 import jaraco.itertools
 from jaraco.functools import compose
@@ -731,3 +733,54 @@ class DirtyZipInfo(zipfile.ZipInfo, ForArchive):
     def __init__(self, filename, *args, **kwargs):
         super().__init__(filename, *args, **kwargs)
         self.filename = filename
+
+
+class TestDirectoryIndex(unittest.TestCase):
+    def make_path(self, names):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf, warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            for name in names:
+                zf.writestr(DirtyZipInfo(name)._for_archive(zf), b'content')
+        zf = zipfile.ZipFile(data)
+        self.addCleanup(zf.close)
+        return zipfile.Path(zf)
+
+    def test_order_duplicates_and_unusual_parents(self):
+        names = [
+            'a/one',
+            'top',
+            'a/',
+            'a/two',
+            'a/one',
+            'a//b//file',
+            'a///',
+            '/abs/file',
+            '//double/file',
+            '../up.txt',
+            './dot.txt',
+            'back\\slash',
+            '/',
+            '//',
+            'unicodé/文件',
+            'line\nbreak/file',
+            'empty/',
+        ]
+        root = self.make_path(names)
+        complete = root.root.namelist()
+        queries = ['', '/', '//', 'missing/'] + [
+            name for name in complete if name.endswith('/')
+        ]
+        for at in queries:
+            with self.subTest(at=at):
+                expected = [
+                    name
+                    for name in complete
+                    if posixpath.dirname(name.rstrip('/')) == at.rstrip('/')
+                ]
+                assert [
+                    child.at for child in zipfile.Path(root.root, at).iterdir()
+                ] == expected
+
+    def test_empty_archive(self):
+        assert list(self.make_path([]).iterdir()) == []

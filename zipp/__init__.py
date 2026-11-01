@@ -194,7 +194,9 @@ class FastLookup(CompleteDirs):
     def _children(self):
         children = {}
         for name in self.namelist():
-            parent = posixpath.dirname(name.rstrip('/'))
+            parent, sep, _ = name.rstrip('/').rpartition('/')
+            # Preserve parents consisting entirely of slashes, as dirname does.
+            parent = parent.rstrip('/') or parent + sep
             children.setdefault(parent, []).append(name)
         return children
 
