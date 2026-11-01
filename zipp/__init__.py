@@ -200,6 +200,12 @@ class FastLookup(CompleteDirs):
             children.setdefault(parent, []).append(name)
         return children
 
+    def close(self):
+        try:
+            super().close()
+        finally:
+            self.__dict__.pop('_children', None)
+
 
 def _extract_text_encoding(encoding=None, *args, **kwargs):
     stack_level = 3
@@ -406,8 +412,11 @@ class Path:
     def iterdir(self):
         if not self.is_dir():
             raise NotADirectoryError("Can't listdir a file")
-        if isinstance(self.root, FastLookup):
+        if isinstance(self.root, FastLookup) and self.root.fp is not None:
             names = self.root._children.get(self.at.rstrip('/'), ())
+            # Construction may finish after another thread closes the archive.
+            if self.root.fp is None:
+                self.root.__dict__.pop('_children', None)
             return map(self._next, names)
         subs = map(self._next, self.root.namelist())
         return filter(self._is_child, subs)

@@ -8,6 +8,7 @@ import stat
 import sys
 import unittest
 import warnings
+from unittest import mock
 
 import jaraco.itertools
 from jaraco.functools import compose
@@ -784,3 +785,45 @@ class TestDirectoryIndex(unittest.TestCase):
 
     def test_empty_archive(self):
         assert list(self.make_path([]).iterdir()) == []
+
+
+class TestDirectoryIndexClose(unittest.TestCase):
+    def make_path(self, names):
+        data = io.BytesIO()
+        with zipfile.ZipFile(data, 'w') as zf:
+            for name in names:
+                zf.writestr(name, b'content')
+        zf = zipfile.ZipFile(data)
+        self.addCleanup(zf.close)
+        return zipfile.Path(zf)
+
+    def test_close_clears_index_and_preserves_iterators(self):
+        root = self.make_path(['a/one', 'top'])
+        iterator = root.iterdir()
+        assert '_children' in root.root.__dict__
+        root.root.close()
+        assert '_children' not in root.root.__dict__
+        assert [child.at for child in iterator] == ['top', 'a/']
+        assert [child.at for child in root.iterdir()] == ['top', 'a/']
+        assert [child.at for child in (root / 'a').iterdir()] == ['a/one']
+        assert '_children' not in root.root.__dict__
+        root.root.close()
+
+    def test_close_without_listing_does_not_build_index(self):
+        root = self.make_path([])
+        root.root.close()
+        assert '_children' not in root.root.__dict__
+        assert list(root.iterdir()) == []
+        assert '_children' not in root.root.__dict__
+
+    def test_close_during_index_construction_does_not_retain_index(self):
+        root = self.make_path(['a/one', 'top'])
+        names = root.root.namelist()
+
+        def closing_names():
+            root.root.close()
+            return names
+
+        with mock.patch.object(root.root, 'namelist', closing_names):
+            assert [child.at for child in root.iterdir()] == ['top', 'a/']
+        assert '_children' not in root.root.__dict__
